@@ -1,6 +1,10 @@
 package me.blast.core
 
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import me.blast.command.Context
+import me.blast.parser.ArgumentsParser
 import org.javacord.api.DiscordApi
 import org.javacord.api.DiscordApiBuilder
 import org.javacord.api.event.message.MessageCreateEvent
@@ -8,24 +12,33 @@ import org.slf4j.LoggerFactory
 
 class Cordex(val prefix: (Long) -> String, private val handler: CordexCommands) {
   fun executeCommand(event: MessageCreateEvent, prefix: String) {
-    val commandName = event.messageContent.substring(prefix.length).split(Regex("\\s+"), 1)[0].lowercase()
+    val args = event.messageContent.substring(prefix.length).split(Regex("\\s+"))
 
-    handler.getCommands()[commandName]?.execute(
-      Context(
-      event,
-      event.server.get(),
-      event.channel,
-      event.messageAuthor.asUser().get(),
-      event.message,
-      prefix
-    )
-    )
+    handler.getCommands()[args[0].lowercase()]?.apply {
+      this.event = event
+      ArgumentsParser.parse(args.drop(1), options)
+      
+      scope.launch {
+        execute(
+          Context(
+            event,
+            event.server.get(),
+            event.channel,
+            event.messageAuthor.asUser().get(),
+            event.message,
+            prefix,
+            this@apply.args.toTypedArray()
+          )
+        )
+      }
+    }
   }
   
   companion object {
     const val VERSION = "0.1"
     
     val logger = LoggerFactory.getLogger(Cordex::class.java)
+    val scope = CoroutineScope(Dispatchers.Default)
   }
 }
 
@@ -41,14 +54,16 @@ class CordexBuilder(token: String) {
   fun commands(block: CordexCommands.() -> Unit) = handler.apply(block)
 }
 
-inline fun cordex(
+suspend inline fun cordex(
   token: String,
-  block: (CordexBuilder.() -> Unit)
-): List<DiscordApi> = CordexBuilder(token).run {
-  block()
-  api.loginAllShards().map {
-    it.join().apply {
-      addListener(CordexListener(Cordex(prefix, handler)))
+  crossinline block: (CordexBuilder.() -> Unit)
+): Flow<DiscordApi> = flow {
+  CordexBuilder(token).run {
+    block()
+    api.loginAllShards().map {
+      emit(it.join().apply {
+        addListener(CordexListener(Cordex(prefix, handler)))
+      })
     }
   }
 }

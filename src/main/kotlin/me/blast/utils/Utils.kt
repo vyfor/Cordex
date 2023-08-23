@@ -1,8 +1,11 @@
 package me.blast.utils
 
 import java.io.File
+import java.util.*
 
 object Utils {
+  val DURATION_REGEX = Regex("^(\\d+(\\.\\d+)?)\\s*(\\w+)$")
+  
   fun loadClasses(packageName: String): List<Class<*>> {
     fun findClasses(dir: File, packageName: String): List<Class<*>> {
       val classes = mutableListOf<Class<*>>()
@@ -38,5 +41,46 @@ object Utils {
     }
     
     return classes
+  }
+  
+  fun extractDigits(s: String): String {
+    return s.replace("[^0-9]".toRegex(), "")
+  }
+  
+  fun convertCamelToKebab(input: String): String {
+    val builder = StringBuilder()
+    
+    for (char in input) {
+      if (char.isUpperCase()) {
+        builder.append('-')
+        builder.append(char.lowercaseChar())
+      } else {
+        builder.append(char)
+      }
+    }
+    
+    return builder.toString()
+  }
+  
+  fun <T> ListIterator<T>.takeWhileWithIndex(predicate: (index: Int, T) -> Boolean): List<T> {
+    val resultList = mutableListOf<T>()
+    var currentIndex = 0
+    
+    while (hasNext()) {
+      val item = next()
+      if (predicate(currentIndex, item)) {
+        resultList.add(item)
+        currentIndex++
+      } else {
+        previous()
+        break
+      }
+    }
+    
+    return resultList
+  }
+  
+  fun <T> Optional<T>.toNullable(): T? {
+    return orElse(null)
   }
 }

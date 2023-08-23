@@ -12,9 +12,6 @@ abstract class Command(
   val selfPermissions: List<PermissionType>? = null,
   val subcommands: List<Command>? = null,
   val runAsDefault: Boolean = false
-) {
-  val remainingCooldown: Int
-    get() = 0
-  
-  abstract fun execute(ctx: Context)
+): CommandImpl() {
+  abstract suspend fun execute(ctx: Context)
 }

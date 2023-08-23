@@ -13,4 +13,5 @@ data class Context(
   val user: User,
   val message: Message,
   val prefix: String,
+  val args: Array<String>
 )
