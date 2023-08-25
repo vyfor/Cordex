@@ -12,6 +12,5 @@ data class Context(
   val channel: TextChannel,
   val user: User,
   val message: Message,
-  val prefix: String,
-  val args: Array<String>
+  val prefix: String
 )
