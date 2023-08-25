@@ -3,78 +3,121 @@ package me.blast.parser
 import me.blast.command.CommandImpl
 import me.blast.parser.exceptions.ArgumentException
 import me.blast.utils.Utils.takeWhileWithIndex
+import org.javacord.api.event.message.MessageCreateEvent
 import java.util.*
 
 object ArgumentsParser {
-  private fun String.isArg() = startsWith("-")
-  
-  fun parse(input: List<String>, options: LinkedList<CommandImpl.Delegate<*>>) {
+  fun parse(input: List<String>, options: LinkedList<CommandImpl.Delegate<*>>, event: MessageCreateEvent, guildOnly: Boolean): Map<CommandImpl.Delegate<*>, Any> {
     val args = input.listIterator()
     val validationList = options.toMutableList()
+    val map = mutableMapOf<CommandImpl.Delegate<*>, Any>()
     while (args.hasNext()) {
       val arg = args.next()
-      if (arg.isArg()) {
+      if (arg.startsWith("-")) {
         val temp = arg.substring(1)
-        if (temp.isArg()) {
+        if (temp.startsWith("-")) {
           validationList.remove(validationList.find { it.name == temp.substring(1) }?.apply {
-            when (this) {
-              is CommandImpl.FlagDelegate -> {
-                value = true
-              }
+            map[this] = when (this) {
+              is CommandImpl.FlagDelegate -> true
+              
               is CommandImpl.OptionDelegate,
               is CommandImpl.OptionDelegate<*>.OptionalOptionDelegate<*, *> -> {
                 val nextArg = args.next()
-                if (nextArg.isArg()) throw ArgumentException.Empty(this)
-                validate(nextArg)
+                if (nextArg.startsWith("-")) throw ArgumentException.Empty(this)
+                try {
+                  validator?.invoke(nextArg) ?: nextArg
+                } catch (_: Exception) {
+                  throw ArgumentException.Invalid(this)
+                }
               }
+              
               is CommandImpl.OptionDelegate<*>.MultipleOptionDelegate<*, *> -> {
                 val arguments = args.takeWhileWithIndex { i, s ->
-                  if (i == 0 && s.isArg()) throw ArgumentException.Empty(this)
-                  (if(multipleValues == 0) true else i < multipleValues) && !s.isArg()
+                  if (i == 0 && s.startsWith("-")) throw ArgumentException.Empty(this)
+                  (if(multipleValues == 0) true else i < multipleValues) && !s.startsWith("-")
                 }
-                validate(arguments)
+                try {
+                  listValidator?.invoke(arguments) ?: arguments
+                } catch (_: Exception) {
+                  throw ArgumentException.Invalid(this)
+                }
               }
               
               else -> throw IllegalArgumentException()
             }
+            if(guildOnly) this.event = event
           })
         } else {
           validationList.remove(validationList.find { it.short == temp }?.apply {
-            when (this) {
-              is CommandImpl.FlagDelegate -> {
-                value = true
-              }
+            map[this] = when (this) {
+              is CommandImpl.FlagDelegate -> true
+              
               is CommandImpl.OptionDelegate,
               is CommandImpl.OptionDelegate<*>.OptionalOptionDelegate<*, *> -> {
                 val nextArg = args.next()
-                if (nextArg.isArg()) throw ArgumentException.Empty(this)
-                validate(nextArg)
+                if (nextArg.startsWith("-")) throw ArgumentException.Empty(this)
+                try {
+                  validator?.invoke(nextArg) ?: nextArg
+                } catch (_: Exception) {
+                  throw ArgumentException.Invalid(this)
+                }
               }
+              
               is CommandImpl.OptionDelegate<*>.MultipleOptionDelegate<*, *> -> {
                 val arguments = args.takeWhileWithIndex { i, s ->
-                  if (i == 0 && s.isArg()) throw ArgumentException.Empty(this)
-                  (if(multipleValues == 0) true else i < multipleValues) && !s.isArg()
+                  if (i == 0 && s.startsWith("-")) throw ArgumentException.Empty(this)
+                  (if(multipleValues == 0) true else i < multipleValues) && !s.startsWith("-")
                 }
-                validate(arguments)
+                try {
+                  listValidator?.invoke(arguments) ?: arguments
+                } catch (_: Exception) {
+                  throw ArgumentException.Invalid(this)
+                }
               }
               
               else -> throw IllegalArgumentException()
             }
+            if(guildOnly) this.event = event
           })
         }
       } else {
         validationList.remove(validationList.find { it is CommandImpl.PositionalDelegate }?.apply {
-          val arguments = args.takeWhileWithIndex { i, s ->
-            if (i == 0 && s.isArg()) throw ArgumentException.Empty(this)
-            (if(multipleValues == 0) true else i < multipleValues) && !s.isArg()
+          map[this] = when(this) {
+            is CommandImpl.PositionalDelegate<*>,
+            is CommandImpl.PositionalDelegate<*>.OptionalPositionalDelegate<*, *> -> {
+              val nextArg = args.next()
+              if (nextArg.startsWith("-")) throw ArgumentException.Empty(this)
+              try {
+                validator?.invoke(nextArg) ?: nextArg
+              } catch (_: Exception) {
+                throw ArgumentException.Invalid(this)
+              }
+            }
+            
+            is CommandImpl.PositionalDelegate<*>.MultiplePositionalDelegate<*, *> -> {
+              val arguments = args.takeWhileWithIndex { i, s ->
+                if (i == 0 && s.startsWith("-")) throw ArgumentException.Empty(this)
+                (if(multipleValues == 0) true else i < multipleValues) && !s.startsWith("-")
+              }
+              try {
+                listValidator?.invoke(arguments) ?: arguments
+              } catch (_: Exception) {
+                throw ArgumentException.Invalid(this)
+              }
+            }
+            
+            else -> throw IllegalArgumentException()
           }
-          validate(arguments.joinToString(" "))
+          if(guildOnly) this.event = event
         })
       }
     }
+    
     val missingArgs = validationList.filter { if(it is CommandImpl.FlagDelegate) false else !it.isOptional }
     if(missingArgs.isNotEmpty()) {
       throw ArgumentException.Missing(missingArgs)
     }
+    
+    return map
   }
 }
