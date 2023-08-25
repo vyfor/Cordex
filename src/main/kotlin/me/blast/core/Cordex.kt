@@ -3,43 +3,15 @@ package me.blast.core
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import me.blast.command.Context
-import me.blast.parser.ArgumentsParser
 import org.javacord.api.DiscordApi
 import org.javacord.api.DiscordApiBuilder
-import org.javacord.api.event.message.MessageCreateEvent
 import org.slf4j.LoggerFactory
 
-class Cordex(val prefix: (Long) -> String, private val handler: CordexCommands) {
-  fun executeCommand(event: MessageCreateEvent, prefix: String) {
-    val args = event.messageContent.substring(prefix.length).split(Regex("\\s+"))
-
-    handler.getCommands()[args[0].lowercase()]?.apply {
-      this.event = event
-      ArgumentsParser.parse(args.drop(1), options)
-      
-      scope.launch {
-        execute(
-          Context(
-            event,
-            event.server.get(),
-            event.channel,
-            event.messageAuthor.asUser().get(),
-            event.message,
-            prefix,
-            this@apply.args.toTypedArray()
-          )
-        )
-      }
-    }
-  }
+object Cordex {
+  const val VERSION = "0.1"
   
-  companion object {
-    const val VERSION = "0.1"
-    
-    val logger = LoggerFactory.getLogger(Cordex::class.java)
-    val scope = CoroutineScope(Dispatchers.Default)
-  }
+  val logger = LoggerFactory.getLogger(Cordex::class.java)
+  val scope = CoroutineScope(Dispatchers.Default)
 }
 
 class CordexBuilder(token: String) {
@@ -47,10 +19,25 @@ class CordexBuilder(token: String) {
   val handler = CordexCommands()
   val api: DiscordApiBuilder = DiscordApiBuilder().setToken(token)
   
+  /**
+   * Set a function for determining the command prefix.
+   *
+   * @param lazy The lazy evaluation function that returns the command prefix.
+   */
   fun prefix(lazy: (Long) -> String) { prefix = lazy }
   
-  fun config(block: DiscordApiBuilder.() -> Unit): DiscordApiBuilder = api.apply(block)
+  /**
+   * Configure the [`DiscordApiBuilder`][org.javacord.api.DiscordApiBuilder].
+   *
+   * @param block The configuration block for [`DiscordApiBuilder`][org.javacord.api.DiscordApiBuilder].
+   */
+  fun config(block: DiscordApiBuilder.() -> Unit) = api.apply(block)
   
+  /**
+   * Add or remove bot commands.
+   *
+   * @param block The configuration block for managing bot commands.
+   */
   fun commands(block: CordexCommands.() -> Unit) = handler.apply(block)
 }
 
@@ -62,7 +49,7 @@ suspend inline fun cordex(
     block()
     api.loginAllShards().map {
       emit(it.join().apply {
-        addListener(CordexListener(Cordex(prefix, handler)))
+        addListener(CordexListener(this@run))
       })
     }
   }
