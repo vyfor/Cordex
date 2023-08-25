@@ -10,37 +10,21 @@ import java.time.Duration
 import java.util.*
 import kotlin.reflect.KProperty
 
-abstract class CommandImpl {
-  @PublishedApi
-  internal var event: MessageCreateEvent? = null
+abstract class CommandImpl(open val guildOnly: Boolean) {
   val options = LinkedList<Delegate<*>>()
-  val args = LinkedList<String>()
   
   abstract inner class Delegate<T> {
+    lateinit var event: MessageCreateEvent
     lateinit var name: String
     lateinit var short: String
     var optionDescription: String = "No description provided."
-    var value: Any? = null
     var validator: (String.() -> T)? = null
     var listValidator: (List<String>.() -> Any?)? = null
     var isOptional: Boolean = false
     var defaultValue: Any? = null
     var multipleValues: Int = 1
     
-    fun validate(input: String) {
-      value = validator?.invoke(input) ?: input
-    }
-    
-    fun validate(input: List<String>) {
-      value = listValidator?.invoke(input) ?: input
-    }
-    
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
-      return if (this is FlagDelegate) {
-        if (value == null) false as T
-        else value as T
-      } else (value as? T) ?: defaultValue as T
-    }
+    operator fun getValue(thisRef: Any?, property: KProperty<*>) = this
     
     operator fun provideDelegate(thisRef: Any?, property: KProperty<*>): Delegate<T> {
       name = Utils.convertCamelToKebab(property.name)
@@ -415,8 +399,8 @@ abstract class CommandImpl {
   }
   
   fun OptionDelegate<*>.user(): OptionDelegate<User> {
+    require(guildOnly) { "This option can only be used in guilds!" }
     return OptionDelegate<User>().apply {
-      require(event!!.server.isPresent)
       optionDescription = this@user.optionDescription
       isOptional = this@user.isOptional
       defaultValue = this@user.defaultValue
@@ -433,8 +417,8 @@ abstract class CommandImpl {
   }
   
   fun OptionDelegate<*>.channel(): OptionDelegate<ServerChannel> {
+    require(guildOnly) { "This option can only be used in guilds!" }
     return OptionDelegate<ServerChannel>().apply {
-      require(event!!.server.isPresent)
       optionDescription = this@channel.optionDescription
       isOptional = this@channel.isOptional
       defaultValue = this@channel.defaultValue
@@ -449,6 +433,7 @@ abstract class CommandImpl {
   }
   
   inline fun <reified R: ServerChannel> OptionDelegate<*>.channelType(): OptionDelegate<R> {
+    require(guildOnly) { "This option can only be used in guilds!" }
     return OptionDelegate<R>().apply {
       optionDescription = this@channelType.optionDescription
       isOptional = this@channelType.isOptional
@@ -473,8 +458,8 @@ abstract class CommandImpl {
   }
   
   fun OptionDelegate<*>.role(): OptionDelegate<Role> {
+    require(guildOnly) { "This option can only be used in guilds!" }
     return OptionDelegate<Role>().apply {
-      require(event!!.server.isPresent)
       optionDescription = this@role.optionDescription
       isOptional = this@role.isOptional
       defaultValue = this@role.defaultValue
