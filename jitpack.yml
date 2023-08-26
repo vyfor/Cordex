@@ -1,0 +1,8 @@
+jdk:
+  - openjdk8
+
+install:
+  - ./gradlew clean assemble
+
+script:
+  - ./gradlew build
