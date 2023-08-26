@@ -29,7 +29,7 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
     
     operator fun provideDelegate(thisRef: Any?, property: KProperty<*>): Delegate<T> {
       name = Utils.convertCamelToKebab(property.name)
-      if (this is CommandImpl.PositionalDelegate || this is CommandImpl.PositionalDelegate<*>.OptionalPositionalDelegate<*, *> || this is CommandImpl.PositionalDelegate<*>.MultiplePositionalDelegate<*, *>) short = name.substring(0, 1)
+      if (!(this is CommandImpl.PositionalDelegate || this is CommandImpl.PositionalDelegate<*>.OptionalPositionalDelegate<*, *> || this is CommandImpl.PositionalDelegate<*>.MultiplePositionalDelegate<*, *>)) short = name.substring(0, 1)
       options.add(this)
       return this
     }
