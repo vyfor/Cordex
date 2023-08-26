@@ -7,17 +7,16 @@ import org.javacord.api.entity.user.User
 import org.javacord.api.event.message.MessageCreateEvent
 import java.net.URL
 import java.time.Duration
-import java.util.*
 import kotlin.reflect.KProperty
 
 abstract class CommandImpl(open val guildOnly: Boolean) {
-  val options = LinkedList<Delegate<*>>()
+  val options = ArrayList<Delegate<*>>()
   
   abstract inner class Delegate<T> {
     lateinit var event: MessageCreateEvent
     lateinit var name: String
-    lateinit var short: String
-    var optionDescription: String = "No description provided."
+    var short: String? = null
+    var optionDescription = "No description provided."
     var validator: (String.() -> T)? = null
     var listValidator: (List<String>.() -> Any?)? = null
     var isOptional: Boolean = false
@@ -28,7 +27,7 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
     
     operator fun provideDelegate(thisRef: Any?, property: KProperty<*>): Delegate<T> {
       name = Utils.convertCamelToKebab(property.name)
-      short = name.substring(0, 1)
+      if (this is CommandImpl.PositionalDelegate || this is CommandImpl.PositionalDelegate<*>.OptionalPositionalDelegate<*, *> || this is CommandImpl.PositionalDelegate<*>.MultiplePositionalDelegate<*, *>) short = name.substring(0, 1)
       options.add(this)
       return this
     }
@@ -47,8 +46,8 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
         }
       }
       
-      fun <R : Any> multiple(count: Int = 0, validator: List<String>.() -> R): OptionalOptionDelegate<List<R>, R> {
-        return OptionalOptionDelegate<List<R>, R>().apply {
+      fun <R : Any> multiple(count: Int = 0, validator: List<String>.() -> R): OptionalOptionDelegate<R, R> {
+        return OptionalOptionDelegate<R, R>().apply {
           isOptional = this@OptionDelegate.isOptional
           defaultValue = this@OptionDelegate.defaultValue
           multipleValues = count
@@ -151,8 +150,8 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
       }
     }
     
-    fun <R : Any> multiple(count: Int = 0, validator: List<String>.() -> R): MultipleOptionDelegate<List<R>, R> {
-      return MultipleOptionDelegate<List<R>, R>().apply {
+    fun <R : Any> multiple(count: Int = 0, validator: List<String>.() -> R): MultipleOptionDelegate<T, R> {
+      return MultipleOptionDelegate<T, R>().apply {
         isOptional = this@OptionDelegate.isOptional
         defaultValue = this@OptionDelegate.defaultValue
         multipleValues = count
@@ -168,7 +167,7 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
   }
   
   inner class PositionalDelegate<T> : Delegate<T>() {
-    inner class OptionalPositionalDelegate<T: Any?, C> : Delegate<T>() {
+    inner class OptionalPositionalDelegate<T : Any?, C> : Delegate<T>() {
       fun multiple(count: Int = 0): OptionalPositionalDelegate<List<C>, C> {
         return OptionalPositionalDelegate<List<C>, C>().apply {
           isOptional = this@PositionalDelegate.isOptional
@@ -178,8 +177,8 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
         }
       }
       
-      fun <R: Any> multiple(count: Int = 0, validator: List<String>.() -> R): OptionalPositionalDelegate<List<R>, R> {
-        return OptionalPositionalDelegate<List<R>, R>().apply {
+      fun <R : Any> multiple(count: Int = 0, validator: List<String>.() -> R): OptionalPositionalDelegate<R, R> {
+        return OptionalPositionalDelegate<R, R>().apply {
           isOptional = this@PositionalDelegate.isOptional
           defaultValue = this@PositionalDelegate.defaultValue
           multipleValues = count
@@ -194,7 +193,7 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
       }
     }
     
-    inner class MultiplePositionalDelegate<T: Any?, C> : Delegate<T>() {
+    inner class MultiplePositionalDelegate<T : Any?, C> : Delegate<T>() {
       fun optional(): MultiplePositionalDelegate<T, T> {
         return MultiplePositionalDelegate<T, T>().apply {
           isOptional = true
@@ -203,7 +202,7 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
         }
       }
       
-      fun <R: Any> optional(default: R): MultiplePositionalDelegate<R, R> {
+      fun <R : Any> optional(default: R): MultiplePositionalDelegate<R, R> {
         return MultiplePositionalDelegate<R, R>().apply {
           isOptional = true
           defaultValue = default
@@ -212,7 +211,7 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
         }
       }
       
-      fun <R: Any> optional(validator: String.() -> R): MultiplePositionalDelegate<R?, R> {
+      fun <R : Any> optional(validator: String.() -> R): MultiplePositionalDelegate<R?, R> {
         return MultiplePositionalDelegate<R?, R>().apply {
           isOptional = true
           multipleValues = this@PositionalDelegate.multipleValues
@@ -221,7 +220,7 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
         }
       }
       
-      fun <R: Any> optional(default: R, validator: String.() -> R): MultiplePositionalDelegate<R, R> {
+      fun <R : Any> optional(default: R, validator: String.() -> R): MultiplePositionalDelegate<R, R> {
         return MultiplePositionalDelegate<R, R>().apply {
           isOptional = true
           defaultValue = default
@@ -245,7 +244,7 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
       }
     }
     
-    fun <R: Any> optional(default: R): OptionalPositionalDelegate<R, R> {
+    fun <R : Any> optional(default: R): OptionalPositionalDelegate<R, R> {
       return OptionalPositionalDelegate<R, R>().apply {
         isOptional = true
         defaultValue = default
@@ -254,7 +253,7 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
       }
     }
     
-    fun <R: Any> optional(validator: String.() -> R): OptionalPositionalDelegate<R?, R> {
+    fun <R : Any> optional(validator: String.() -> R): OptionalPositionalDelegate<R?, R> {
       return OptionalPositionalDelegate<R?, R>().apply {
         isOptional = true
         multipleValues = this@PositionalDelegate.multipleValues
@@ -263,7 +262,7 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
       }
     }
     
-    fun <R: Any> optional(default: R, validator: String.() -> R): OptionalPositionalDelegate<R, R> {
+    fun <R : Any> optional(default: R, validator: String.() -> R): OptionalPositionalDelegate<R, R> {
       return OptionalPositionalDelegate<R, R>().apply {
         isOptional = true
         defaultValue = default
@@ -282,8 +281,8 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
       }
     }
     
-    fun <R: Any> multiple(count: Int = 0, validator: List<String>.() -> R): MultiplePositionalDelegate<List<R>, R> {
-      return MultiplePositionalDelegate<List<R>, R>().apply {
+    fun <R : Any> multiple(count: Int = 0, validator: List<String>.() -> R): MultiplePositionalDelegate<R, R> {
+      return MultiplePositionalDelegate<R, R>().apply {
         isOptional = this@PositionalDelegate.isOptional
         defaultValue = this@PositionalDelegate.defaultValue
         multipleValues = count
@@ -300,41 +299,41 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
   
   fun option(description: String? = null, fullName: String? = null, shortName: String? = null): OptionDelegate<String> {
     return OptionDelegate<String>().apply {
-      if(description != null) optionDescription = description
-      if(fullName != null) name = fullName
-      if(shortName != null) short = shortName
+      if (description != null) optionDescription = description
+      if (fullName != null) name = fullName
+      short = shortName
     }
   }
   
   inline fun <reified T> option(description: String? = null, fullName: String? = null, shortName: String? = null, noinline validator: String.() -> T): OptionDelegate<T> {
     return OptionDelegate<T>().addValidator(validator).apply {
-      if(description != null) optionDescription = description
-      if(fullName != null) name = fullName
-      if(shortName != null) short = shortName
+      if (description != null) optionDescription = description
+      if (fullName != null) name = fullName
+      short = shortName
     }
   }
   
   fun flag(description: String? = null, fullName: String? = null, shortName: String? = null): Delegate<Boolean> {
     return FlagDelegate().apply {
-      if(description != null) optionDescription = description
-      if(fullName != null) name = fullName
-      if(shortName != null) short = shortName
+      if (description != null) optionDescription = description
+      if (fullName != null) name = fullName
+      short = shortName
     }
   }
   
   fun positional(description: String? = null, fullName: String? = null, shortName: String? = null): PositionalDelegate<String> {
     return PositionalDelegate<String>().apply {
-      if(description != null) optionDescription = description
-      if(fullName != null) name = fullName
-      if(shortName != null) short = shortName
+      if (description != null) optionDescription = description
+      if (fullName != null) name = fullName
+      short = shortName
     }
   }
   
   inline fun <reified T> positional(description: String? = null, fullName: String? = null, shortName: String? = null, noinline validator: String.() -> T): PositionalDelegate<T> {
     return PositionalDelegate<T>().addValidator(validator).apply {
-      if(description != null) optionDescription = description
-      if(fullName != null) name = fullName
-      if(shortName != null) short = shortName
+      if (description != null) optionDescription = description
+      if (fullName != null) name = fullName
+      short = shortName
     }
   }
   
@@ -406,11 +405,12 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
       defaultValue = this@user.defaultValue
       multipleValues = this@user.multipleValues
       addValidator {
-        event!!.server.get().let { server ->
-          server.getMembersByDisplayNameIgnoreCase(this).firstOrNull() ?:
-          server.getMemberByDiscriminatedName(this).orElse(
+        event.server.get().let { server ->
+          server.getMembersByDisplayNameIgnoreCase(this).firstOrNull() ?: server.getMemberByDiscriminatedName(this).orElse(
             server.getMemberById(Utils.extractDigits(this)).orElse(
-              server.getMembersByNameIgnoreCase(this).firstOrNull())) ?: throw IllegalArgumentException()
+              server.getMembersByNameIgnoreCase(this).firstOrNull()
+            )
+          ) ?: throw IllegalArgumentException()
         }
       }
     }
@@ -424,15 +424,14 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
       defaultValue = this@channel.defaultValue
       multipleValues = this@channel.multipleValues
       addValidator {
-        event!!.server.get().let { server ->
-          server.getChannelsByNameIgnoreCase(this).firstOrNull() ?:
-          server.getChannelById(Utils.extractDigits(this)).orElse(null) ?: throw IllegalArgumentException()
+        event.server.get().let { server ->
+          server.getChannelsByNameIgnoreCase(this).firstOrNull() ?: server.getChannelById(Utils.extractDigits(this)).orElse(null) ?: throw IllegalArgumentException()
         }
       }
     }
   }
   
-  inline fun <reified R: ServerChannel> OptionDelegate<*>.channelType(): OptionDelegate<R> {
+  inline fun <reified R : ServerChannel> OptionDelegate<*>.channelType(): OptionDelegate<R> {
     require(guildOnly) { "This option can only be used in guilds!" }
     return OptionDelegate<R>().apply {
       optionDescription = this@channelType.optionDescription
@@ -440,9 +439,8 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
       defaultValue = this@channelType.defaultValue
       multipleValues = this@channelType.multipleValues
       addValidator {
-        val channel = event!!.server.get().let { server ->
-          server.getChannelsByNameIgnoreCase(this).firstOrNull() ?:
-          server.getChannelById(Utils.extractDigits(this)).orElse(null) ?: throw IllegalArgumentException()
+        val channel = event.server.get().let { server ->
+          server.getChannelsByNameIgnoreCase(this).firstOrNull() ?: server.getChannelById(Utils.extractDigits(this)).orElse(null) ?: throw IllegalArgumentException()
         }
         when (R::class) {
           ServerChannel::class -> channel as R
@@ -465,9 +463,8 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
       defaultValue = this@role.defaultValue
       multipleValues = this@role.multipleValues
       addValidator {
-        event!!.server.get().let { server ->
-          server.getRolesByNameIgnoreCase(this).firstOrNull() ?:
-          server.getRoleById(Utils.extractDigits(this)).orElse(null) ?: throw IllegalArgumentException()
+        event.server.get().let { server ->
+          server.getRolesByNameIgnoreCase(this).firstOrNull() ?: server.getRoleById(Utils.extractDigits(this)).orElse(null) ?: throw IllegalArgumentException()
         }
       }
     }
