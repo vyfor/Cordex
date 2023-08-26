@@ -108,10 +108,10 @@ object Utils {
         -> {
           partition { it is CommandImpl.PositionalDelegate || it is CommandImpl.PositionalDelegate<*>.OptionalPositionalDelegate<*, *> || it is CommandImpl.PositionalDelegate<*>.MultiplePositionalDelegate<*, *> }.apply {
             formattedArgs = first.joinToString("\n") { option ->
-              "${if ((exception as ArgumentException.Invalid).argument == option) "\u001B[0;31m>>> " else ""}\u001B[0;36m[${if (option.isOptional || option is CommandImpl.FlagDelegate) "?" else "*"}]  \u001B[0;32m<${option.name}>\n     \u001B[0;30m${"${option.optionDescription}${if (option.defaultValue != null) " \u001B[0;30m(default: ${option.defaultValue})" else ""}"}"
+              "\u001B[0;31m${if ((exception as ArgumentException.Invalid).argument == option) ">>> " else ""}\u001B[0;30m[\u001B[0;31m${if (option.isOptional || option is CommandImpl.FlagDelegate) "?" else "*"}\u001B[0;30m]  \u001B[0;30m<\u001B[1;31m${option.name}\u001B[0;30m>:\n     \u001B[0;33m${option.optionDescription}"
             }
             formattedOptions = second.joinToString("\n") { option ->
-              "${if ((exception as ArgumentException.Invalid).argument == option) "\u001B[0;31m>>> " else ""}\u001B[0;36m[${if (option.isOptional || option is CommandImpl.FlagDelegate) "?" else "*"}]  \u001B[0;32m--${option.name}${if (option.short != null) ", -${option.short}" else ""}:\n     \u001B[0;30m${"${option.optionDescription}${if (option.defaultValue != null) " \u001B[0;30m(default: ${option.defaultValue})" else ""}"}"
+              "\u001B[0;31m${if ((exception as ArgumentException.Invalid).argument == option) ">>> " else ""}\u001B[0;30m[\u001B[0;31m${if (option.isOptional || option is CommandImpl.FlagDelegate) "?" else "*"}\u001B[0;30m]  \u001B[0;30m--\u001B[1;31m${option.name}${if (option.short != null) "\u001B[0;30m, -\u001B[1;31m${option.short}" else ""}:\n     \u001B[0;33m${option.optionDescription}"
             }
           }
         }
@@ -119,10 +119,10 @@ object Utils {
         is ArgumentException.Missing -> {
           partition { it is CommandImpl.PositionalDelegate || it is CommandImpl.PositionalDelegate<*>.OptionalPositionalDelegate<*, *> || it is CommandImpl.PositionalDelegate<*>.MultiplePositionalDelegate<*, *> }.apply {
             formattedArgs = first.joinToString("\n") { option ->
-              "\u001B[0;36m[${if (option.isOptional || option is CommandImpl.FlagDelegate) "?" else "*"}]  \u001B[0;32m<${option.name}>\n     \u001B[0;30m${"${option.optionDescription}${if (option.defaultValue != null) "\u001B[0;30m (default: ${option.defaultValue})" else ""}"}"
+              "\u001B[0;30m[\u001B[0;31m${if (option.isOptional || option is CommandImpl.FlagDelegate) "?" else "*"}\u001B[0;30m]  \u001B[0;30m<\u001B[1;31m${option.name}\u001B[0;30m>:\n     \u001B[0;33m${option.optionDescription}"
             }
             formattedOptions = second.joinToString("\n") { option ->
-              "\u001B[0;36m[${if (option.isOptional || option is CommandImpl.FlagDelegate) "?" else "*"}]  \u001B[0;32m--${option.name}${if (option.short != null) ", -${option.short}" else ""}:\n     \u001B[0;30m${"${option.optionDescription}${if (option.defaultValue != null) " \u001B[0;30m(default: ${option.defaultValue})" else ""}"}"
+              "\u001B[0;30m[\u001B[0;31m${if (option.isOptional || option is CommandImpl.FlagDelegate) "?" else "*"}\u001B[0;30m]  \u001B[0;30m--\u001B[1;31m${option.name}${if (option.short != null) "\u001B[0;30m, -\u001B[1;31m${option.short}" else ""}\u001B[0;30m:\n     \u001B[0;33m${option.optionDescription}"
             }
           }
         }
@@ -132,7 +132,7 @@ object Utils {
       } else if (formattedOptions.isEmpty()) {
         formattedArgs
       } else {
-        "\u001B[0;10mPositional Arguments:\n$formattedArgs\n\n\u001B[0;10mOptions:\n$formattedOptions"
+        "\u001B[1;37mPositional Arguments\n$formattedArgs\n\n\u001B[1;37mOptions\n$formattedOptions"
       } + "```"
     }
   }
