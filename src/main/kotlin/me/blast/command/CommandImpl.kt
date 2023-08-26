@@ -5,14 +5,16 @@ import org.javacord.api.entity.channel.*
 import org.javacord.api.entity.permission.Role
 import org.javacord.api.entity.user.User
 import org.javacord.api.event.message.MessageCreateEvent
+import java.awt.Color
 import java.net.URL
 import java.time.Duration
+import kotlin.collections.ArrayList
 import kotlin.reflect.KProperty
 
 abstract class CommandImpl(open val guildOnly: Boolean) {
   val options = ArrayList<Delegate<*>>()
   
-  abstract inner class Delegate<T> {
+  open inner class Delegate<T> {
     lateinit var event: MessageCreateEvent
     lateinit var name: String
     var short: String? = null
@@ -337,39 +339,33 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
     }
   }
   
-  fun OptionDelegate<*>.int(): OptionDelegate<Int> {
-    return OptionDelegate<Int>().apply {
+  fun Delegate<*>.int(): Delegate<Int> {
+    return Delegate<Int>().apply {
       optionDescription = this@int.optionDescription
       isOptional = this@int.isOptional
       defaultValue = this@int.defaultValue
       multipleValues = this@int.multipleValues
-      addValidator {
-        toInt()
-      }
+      validator = { toInt() }
     }
   }
   
-  fun OptionDelegate<*>.long(): OptionDelegate<Long> {
-    return OptionDelegate<Long>().apply {
+  fun Delegate<*>.long(): Delegate<Long> {
+    return Delegate<Long>().apply {
       optionDescription = this@long.optionDescription
       isOptional = this@long.isOptional
       defaultValue = this@long.defaultValue
       multipleValues = this@long.multipleValues
-      addValidator {
-        toLong()
-      }
+      validator = { toLong() }
     }
   }
   
-  fun OptionDelegate<*>.float(): OptionDelegate<Float> {
-    return OptionDelegate<Float>().apply {
+  fun Delegate<*>.float(): Delegate<Float> {
+    return Delegate<Float>().apply {
       optionDescription = this@float.optionDescription
       isOptional = this@float.isOptional
       defaultValue = this@float.defaultValue
       multipleValues = this@float.multipleValues
-      addValidator {
-        toFloat()
-      }
+      validator = { toFloat() }
     }
   }
   
@@ -379,32 +375,28 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
       isOptional = this@double.isOptional
       defaultValue = this@double.defaultValue
       multipleValues = this@double.multipleValues
-      addValidator {
-        toDouble()
-      }
+      validator = { toDouble() }
     }
   }
   
-  fun OptionDelegate<*>.url(): OptionDelegate<URL> {
-    return OptionDelegate<URL>().apply {
+  fun Delegate<*>.url(): Delegate<URL> {
+    return Delegate<URL>().apply {
       optionDescription = this@url.optionDescription
       isOptional = this@url.isOptional
       defaultValue = this@url.defaultValue
       multipleValues = this@url.multipleValues
-      addValidator {
-        URL(this)
-      }
+      validator = { URL(this) }
     }
   }
   
-  fun OptionDelegate<*>.user(): OptionDelegate<User> {
+  fun Delegate<*>.user(): Delegate<User> {
     require(guildOnly) { "This option can only be used in guilds!" }
-    return OptionDelegate<User>().apply {
+    return Delegate<User>().apply {
       optionDescription = this@user.optionDescription
       isOptional = this@user.isOptional
       defaultValue = this@user.defaultValue
       multipleValues = this@user.multipleValues
-      addValidator {
+      validator = {
         event.server.get().let { server ->
           server.getMembersByDisplayNameIgnoreCase(this).firstOrNull() ?: server.getMemberByDiscriminatedName(this).orElse(
             server.getMemberById(Utils.extractDigits(this)).orElse(
@@ -416,14 +408,14 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
     }
   }
   
-  fun OptionDelegate<*>.channel(): OptionDelegate<ServerChannel> {
+  fun Delegate<*>.channel(): Delegate<ServerChannel> {
     require(guildOnly) { "This option can only be used in guilds!" }
-    return OptionDelegate<ServerChannel>().apply {
+    return Delegate<ServerChannel>().apply {
       optionDescription = this@channel.optionDescription
       isOptional = this@channel.isOptional
       defaultValue = this@channel.defaultValue
       multipleValues = this@channel.multipleValues
-      addValidator {
+      validator = {
         event.server.get().let { server ->
           server.getChannelsByNameIgnoreCase(this).firstOrNull() ?: server.getChannelById(Utils.extractDigits(this)).orElse(null) ?: throw IllegalArgumentException()
         }
@@ -431,14 +423,14 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
     }
   }
   
-  inline fun <reified R : ServerChannel> OptionDelegate<*>.channelType(): OptionDelegate<R> {
+  inline fun <reified R : ServerChannel> Delegate<*>.channelType(): Delegate<R> {
     require(guildOnly) { "This option can only be used in guilds!" }
-    return OptionDelegate<R>().apply {
+    return Delegate<R>().apply {
       optionDescription = this@channelType.optionDescription
       isOptional = this@channelType.isOptional
       defaultValue = this@channelType.defaultValue
       multipleValues = this@channelType.multipleValues
-      addValidator {
+      validator = {
         val channel = event.server.get().let { server ->
           server.getChannelsByNameIgnoreCase(this).firstOrNull() ?: server.getChannelById(Utils.extractDigits(this)).orElse(null) ?: throw IllegalArgumentException()
         }
@@ -455,14 +447,29 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
     }
   }
   
-  fun OptionDelegate<*>.role(): OptionDelegate<Role> {
+  fun Delegate<*>.category(): Delegate<ChannelCategory> {
     require(guildOnly) { "This option can only be used in guilds!" }
-    return OptionDelegate<Role>().apply {
+    return Delegate<ChannelCategory>().apply {
+      optionDescription = this@category.optionDescription
+      isOptional = this@category.isOptional
+      defaultValue = this@category.defaultValue
+      multipleValues = this@category.multipleValues
+      validator = {
+        event.server.get().let { server ->
+          server.getChannelCategoriesByNameIgnoreCase(this).firstOrNull() ?: server.getChannelCategoryById(Utils.extractDigits(this)).orElse(null) ?: throw IllegalArgumentException()
+        }
+      }
+    }
+  }
+  
+  fun Delegate<*>.role(): Delegate<Role> {
+    require(guildOnly) { "This option can only be used in guilds!" }
+    return Delegate<Role>().apply {
       optionDescription = this@role.optionDescription
       isOptional = this@role.isOptional
       defaultValue = this@role.defaultValue
       multipleValues = this@role.multipleValues
-      addValidator {
+      validator = {
         event.server.get().let { server ->
           server.getRolesByNameIgnoreCase(this).firstOrNull() ?: server.getRoleById(Utils.extractDigits(this)).orElse(null) ?: throw IllegalArgumentException()
         }
@@ -470,13 +477,13 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
     }
   }
   
-  fun OptionDelegate<*>.duration(): OptionDelegate<Duration> {
-    return OptionDelegate<Duration>().apply {
+  fun Delegate<*>.duration(): Delegate<Duration> {
+    return Delegate<Duration>().apply {
       optionDescription = this@duration.optionDescription
       isOptional = this@duration.isOptional
       defaultValue = this@duration.defaultValue
       multipleValues = this@duration.multipleValues
-      addValidator {
+      validator = {
         val matchResult = Utils.DURATION_REGEX.matchEntire(this) ?: throw IllegalArgumentException()
         
         val (floatValueStr, _, timeUnit) = matchResult.destructured
@@ -490,6 +497,18 @@ abstract class CommandImpl(open val guildOnly: Boolean) {
           "s", "sec", "secs", "second", "seconds" -> Duration.ofSeconds(floatValue.toLong())
           else -> throw IllegalArgumentException()
         }
+      }
+    }
+  }
+  
+  fun Delegate<*>.color(): Delegate<Color> {
+    return Delegate<Color>().apply {
+      optionDescription = this@color.optionDescription
+      isOptional = this@color.isOptional
+      defaultValue = this@color.defaultValue
+      multipleValues = this@color.multipleValues
+      validator = {
+        Color::class.java.getField(this)[null] as? Color ?: Color.decode(this)
       }
     }
   }
