@@ -13,7 +13,7 @@ abstract class Command(
   val subcommands: List<Command>? = null,
   val runAsDefault: Boolean = false,
   override val guildOnly: Boolean = false,
-): CommandImpl(guildOnly) {
+) : CommandImpl(guildOnly) {
   val name = name.lowercase()
   val aliases = aliases?.map { it.lowercase() }
   

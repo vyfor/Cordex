@@ -3,7 +3,6 @@ package me.blast.parser.exceptions
 import me.blast.command.CommandImpl.Delegate
 
 sealed class ArgumentException : Exception() {
-  
   /**
    * Represents an exception where an invalid value is provided for an argument.
    *
