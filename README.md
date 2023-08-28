@@ -44,7 +44,7 @@ dependencies {
 <dependency>
     <groupId>com.github.reblast</groupId>
     <artifactId>Cordex</artifactId>
-    <version>v0.2.1</version>
+    <version>0.2.1</version>
 </dependency>
 ```
 
