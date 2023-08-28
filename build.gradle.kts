@@ -4,8 +4,8 @@ plugins {
     `maven-publish`
 }
 
-group = "com.github.ReBlast"
-version = "0.2"
+group = "com.github.reblast"
+version = "0.2.1"
 
 repositories {
     mavenCentral()
@@ -15,6 +15,7 @@ repositories {
 dependencies {
     api("org.javacord:javacord:3.9.0-SNAPSHOT")
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    api("net.fellbaum:jemoji:1.1.6")
     
     implementation("org.apache.logging.log4j:log4j-to-slf4j:2.20.0")
     implementation("ch.qos.logback:logback-classic:1.4.11")

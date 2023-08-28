@@ -28,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.ReBlast:Cordex:0.2")
+    implementation("com.github.reblast:Cordex:0.2.1")
 }
 ```
 
@@ -42,9 +42,9 @@ dependencies {
 </repositories>
 
 <dependency>
-    <groupId>com.github.ReBlast</groupId>
+    <groupId>com.github.reblast</groupId>
     <artifactId>Cordex</artifactId>
-    <version>v0.2</version>
+    <version>v0.2.1</version>
 </dependency>
 ```
 
@@ -195,7 +195,7 @@ Cordex provides a range of predefined validators you can utilize:
 `category()`
 `role()`
 `unicodeEmoji()`
-`custom☺Emoji()`
+`customEmoji()`
 
 > [!NOTE]
 > Methods like these combine multiple input values (from multi-value arguments) into a single string and then tries to convert it to the appropriate type.
