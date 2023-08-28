@@ -1,5 +1,6 @@
 package me.blast.command
 
+import me.blast.command.argument.Arguments
 import org.javacord.api.entity.permission.PermissionType
 
 abstract class Command(

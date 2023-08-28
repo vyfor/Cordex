@@ -4,8 +4,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import me.blast.command.Command
+import me.blast.parser.exception.ArgumentException
 import org.javacord.api.DiscordApi
 import org.javacord.api.DiscordApiBuilder
+import org.javacord.api.event.message.MessageCreateEvent
 import org.slf4j.LoggerFactory
 
 object Cordex {
@@ -15,7 +18,7 @@ object Cordex {
 }
 
 class CordexBuilder(token: String) {
-  var prefix: (Long) -> String = { "!" }
+  val config = CordexConfiguration()
   val handler = CordexCommands()
   val api: DiscordApiBuilder = DiscordApiBuilder().setToken(token)
   
@@ -25,7 +28,7 @@ class CordexBuilder(token: String) {
    * @param lazy The lazy evaluation function that returns the command prefix.
    */
   fun prefix(lazy: (Long) -> String) {
-    prefix = lazy
+    config.prefix = lazy
   }
   
   /**
@@ -40,7 +43,28 @@ class CordexBuilder(token: String) {
    *
    * @param block The configuration block for managing bot commands.
    */
-  fun commands(block: CordexCommands.() -> Unit) = handler.apply(block)
+  fun commands(block: CordexCommands.() -> Unit) = block(handler)
+  
+  /**
+   * Set an error handler for handling exceptions thrown during execution of commands.
+   *
+   * @param block The block of code to execute when an exception occurs.
+   */
+  fun onError(block: (MessageCreateEvent, Command, Exception) -> Unit) {
+    config.errorHandler = block
+  }
+  
+  /**
+   * Set an error handler for handling exceptions thrown during parsing of arguments.
+   *
+   * *If not specified, will default to sending the help embed of the command.*
+   * @param block The block of code to execute when an argument exception occurs.
+   *
+   * @see [ArgumentException]
+   */
+  fun onParseError(block: (MessageCreateEvent, Command, ArgumentException) -> Unit) {
+    config.parsingErrorHandler = block
+  }
 }
 
 /**

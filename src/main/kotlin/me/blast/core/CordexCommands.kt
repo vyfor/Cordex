@@ -1,12 +1,10 @@
 package me.blast.core
 
 import me.blast.command.Command
-import me.blast.parser.exceptions.ArgumentException
 import me.blast.utils.Utils
 
 class CordexCommands {
   private val commands = mutableMapOf<String, Command>()
-  var errorHandler: ((ArgumentException, Command) -> Unit)? = null
   
   /**
    * Get a map containing the registered commands.
@@ -54,18 +52,6 @@ class CordexCommands {
         Cordex.logger.error("Could not load class ${command.name}!", e)
       }
     }
-  }
-  
-  /**
-   * Set an error handler for handling exceptions thrown during parsing of arguments.
-   *
-   * *If not specified, will default to sending the help embed of the command.*
-   * @param block The block of code to execute when an argument exception occurs.
-   *
-   * @see [ArgumentException]
-   */
-  fun onError(block: (ArgumentException, Command) -> Unit) {
-    errorHandler = block
   }
   
   /**

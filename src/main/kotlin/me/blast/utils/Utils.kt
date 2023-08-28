@@ -2,7 +2,8 @@ package me.blast.utils
 
 import me.blast.command.Command
 import me.blast.command.CommandImpl
-import me.blast.parser.exceptions.ArgumentException
+import me.blast.command.argument.ArgumentType
+import me.blast.parser.exception.ArgumentException
 import org.javacord.api.entity.message.MessageAuthor
 import org.javacord.api.entity.message.embed.EmbedBuilder
 import java.awt.Color
@@ -95,45 +96,47 @@ object Utils {
     setFooter(user.name, user.avatar)
     setTimestampToNow()
     setColor(Color.RED)
-    generateArgumentUsage(exception)?.let { addField("Arguments", it) }
+    options.takeIf { it.isNotEmpty() }?.let { addField("Arguments", generateArgumentUsage(it)) }
   }
   
-  fun Command.generateArgumentUsage(exception: ArgumentException): String? {
+  fun generateArgumentUsage(options: List<CommandImpl.Delegate<*>>): String? {
     return options.takeIf { it.isNotEmpty() }?.run {
       val formattedArgs: String
       val formattedOptions: String
-      when (exception) {
-        is ArgumentException.Invalid,
-        is ArgumentException.Empty,
-        -> {
-          partition { it is CommandImpl.PositionalDelegate || it is CommandImpl.PositionalDelegate<*>.OptionalPositionalDelegate<*, *> || it is CommandImpl.PositionalDelegate<*>.MultiplePositionalDelegate<*, *> }.apply {
-            formattedArgs = first.joinToString("\n") { option ->
-              "\u001B[0;31m${if ((exception as ArgumentException.Invalid).argument == option) ">>> " else ""}\u001B[0;30m[\u001B[0;31m${if (option.isOptional || option is CommandImpl.FlagDelegate) "?" else "*"}\u001B[0;30m]  \u001B[0;30m<\u001B[1;31m${option.name}\u001B[0;30m>:\n     \u001B[0;33m${option.optionDescription}"
-            }
-            formattedOptions = second.joinToString("\n") { option ->
-              "\u001B[0;31m${if ((exception as ArgumentException.Invalid).argument == option) ">>> " else ""}\u001B[0;30m[\u001B[0;31m${if (option.isOptional || option is CommandImpl.FlagDelegate) "?" else "*"}\u001B[0;30m]  \u001B[0;30m--\u001B[1;31m${option.name}${if (option.short != null) "\u001B[0;30m, -\u001B[1;31m${option.short}" else ""}:\n     \u001B[0;33m${option.optionDescription}"
-            }
-          }
+      partition { it is CommandImpl.PositionalDelegate || it is CommandImpl.PositionalDelegate<*>.OptionalPositionalDelegate<*, *> || it is CommandImpl.PositionalDelegate<*>.MultiplePositionalDelegate<*, *> }.apply {
+        formattedArgs = first.joinToString("\n") { option ->
+          "\u001B[0;30m[\u001B[0;31m${if (option.argumentIsOptional || option is CommandImpl.FlagDelegate) "?" else "*"}\u001B[0;30m]  \u001B[0;30m<\u001B[1;31m${option.argumentName}\u001B[0;30m>:\n     \u001B[0;33m${option.argumentDescription}"
         }
-        
-        is ArgumentException.Missing -> {
-          partition { it is CommandImpl.PositionalDelegate || it is CommandImpl.PositionalDelegate<*>.OptionalPositionalDelegate<*, *> || it is CommandImpl.PositionalDelegate<*>.MultiplePositionalDelegate<*, *> }.apply {
-            formattedArgs = first.joinToString("\n") { option ->
-              "\u001B[0;30m[\u001B[0;31m${if (option.isOptional || option is CommandImpl.FlagDelegate) "?" else "*"}\u001B[0;30m]  \u001B[0;30m<\u001B[1;31m${option.name}\u001B[0;30m>:\n     \u001B[0;33m${option.optionDescription}"
-            }
-            formattedOptions = second.joinToString("\n") { option ->
-              "\u001B[0;30m[\u001B[0;31m${if (option.isOptional || option is CommandImpl.FlagDelegate) "?" else "*"}\u001B[0;30m]  \u001B[0;30m--\u001B[1;31m${option.name}${if (option.short != null) "\u001B[0;30m, -\u001B[1;31m${option.short}" else ""}\u001B[0;30m:\n     \u001B[0;33m${option.optionDescription}"
-            }
-          }
+        formattedOptions = second.joinToString("\n") { option ->
+          "\u001B[0;30m[\u001B[0;31m${if (option.argumentIsOptional || option is CommandImpl.FlagDelegate) "?" else "*"}\u001B[0;30m]  \u001B[0;30m--\u001B[1;31m${option.argumentName}${if (option.argumentShortName != null) "\u001B[0;30m, -\u001B[1;31m${option.argumentShortName}" else ""}:\n     \u001B[0;33m${option.argumentDescription}"
         }
       }
-      "```ansi\n" + if (formattedArgs.isEmpty()) {
+      "```ansi\n${if (formattedArgs.isEmpty()) {
         formattedOptions
       } else if (formattedOptions.isEmpty()) {
         formattedArgs
       } else {
         "\u001B[1;37mPositional Arguments\n$formattedArgs\n\n\u001B[1;37mOptions\n$formattedOptions"
-      } + "```"
+      }}```"
     }
   }
+  
+  fun generateArgumentError(exception: ArgumentException): String {
+    return when (exception) {
+      is ArgumentException.Empty -> "${if(exception.argument.argumentType == ArgumentType.POSITIONAL) "Positional Arguments" else "Options"}:\n\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (exception.argument.argumentIsOptional || exception.argument.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m<\u001B[1;31m${exception.argument.argumentName}\u001B[0;30m>:\n     \u001B[0;33m${exception.argument.argumentDescription}"
+      is ArgumentException.Insufficient -> "${if(exception.argument.argumentType == ArgumentType.POSITIONAL) "Positional Arguments" else "Options"}:\n\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (exception.argument.argumentIsOptional || exception.argument.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m<\u001B[1;31m${exception.argument.argumentName}\u001B[0;30m>:\n     \u001B[0;33m${exception.argument.argumentDescription}"
+      is ArgumentException.Invalid -> "${if(exception.argument.argumentType == ArgumentType.POSITIONAL) "Positional Arguments" else "Options"}:\n\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (exception.argument.argumentIsOptional || exception.argument.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m<\u001B[1;31m${exception.argument.argumentName}\u001B[0;30m>:\n     \u001B[0;33m${exception.argument.argumentDescription}"
+      is ArgumentException.Missing -> {
+        exception.arguments.partition { it.argumentType == ArgumentType.POSITIONAL }.run {
+          first.joinToString("\n") { option ->
+            "\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (option.argumentIsOptional || option is CommandImpl.FlagDelegate) "?" else "*"}\u001B[0;30m]  \u001B[0;30m<\u001B[1;31m${option.argumentName}\u001B[0;30m>:\n     \u001B[0;33m${option.argumentDescription}"
+          } + second.joinToString("\n") { option ->
+            "\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (option.argumentIsOptional || option is CommandImpl.FlagDelegate) "?" else "*"}\u001B[0;30m]  \u001B[0;30m--\u001B[1;31m${option.argumentName}${if (option.argumentShortName != null) "\u001B[0;30m, -\u001B[1;31m${option.argumentShortName}" else ""}:\n     \u001B[0;33m${option.argumentDescription}"
+          }
+        }
+      }
+    }
+  }
+  
+  fun <T> Optional<T>.hasValue() = orElse(null) != null
 }
