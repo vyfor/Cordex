@@ -4,6 +4,7 @@ package me.blast.command.argument.extensions
 
 import me.blast.command.argument.Argument
 import me.blast.command.argument.MultiValueArgument
+import me.blast.utils.Snowflake
 import me.blast.utils.Utils
 import me.blast.utils.Utils.hasValue
 import me.blast.utils.throwUnless
@@ -327,6 +328,23 @@ fun MultiValueArgument<*>.customEmojis(searchMutualGuilds: Boolean = false): Arg
             }
           }
         }
+      }
+    }
+  }
+}
+
+/**
+ * Converts the argument values to [Snowflake]s.
+ *
+ * Use [snowflake] to convert multiple values into a single one.
+ *
+ * @return An Argument containing a list with retrieved [Snowflake] values.
+ */
+fun MultiValueArgument<*>.snowflakes(): Argument<List<Snowflake>> {
+  return (this as Argument<List<Snowflake>>).apply {
+    argumentValidator = {
+      map {
+        Snowflake(toULong())
       }
     }
   }

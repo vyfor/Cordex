@@ -3,6 +3,7 @@
 package me.blast.command.argument.extensions
 
 import me.blast.command.argument.Argument
+import me.blast.utils.Snowflake
 import me.blast.utils.Utils
 import me.blast.utils.Utils.hasValue
 import me.blast.utils.throwUnless
@@ -295,6 +296,21 @@ fun Argument<*>.customEmoji(searchMutualGuilds: Boolean = false): Argument<Custo
           }
         }
       }
+    }
+  }
+}
+
+/**
+ * Converts the argument value(s) to a [Snowflake].
+ *
+ * Use [snowflakes] to convert each value separately.
+ *
+ * @return An Argument containing the retrieved [Snowflake] value.
+ */
+fun Argument<*>.snowflake(): Argument<Snowflake> {
+  return (this as Argument<Snowflake>).apply {
+    argumentValidator = {
+      Snowflake(toULong())
     }
   }
 }

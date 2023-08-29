@@ -4,6 +4,7 @@ package me.blast.command.argument.extensions
 
 import me.blast.command.argument.OptionalArgument
 import me.blast.command.argument.Argument
+import me.blast.utils.Snowflake
 import me.blast.utils.Utils
 import me.blast.utils.Utils.hasValue
 import me.blast.utils.throwUnless
@@ -284,6 +285,21 @@ fun OptionalArgument<*>.customEmoji(searchMutualGuilds: Boolean = false): Argume
           }
         }
       }
+    }
+  }
+}
+
+/**
+ * Converts the argument value(s) to a [Snowflake].
+ *
+ * Use [snowflakes] to convert each value separately.
+ *
+ * @return An Argument containing the retrieved nullable [Snowflake] value.
+ */
+fun OptionalArgument<*>.snowflake(): Argument<Snowflake?> {
+  return (this as Argument<Snowflake?>).apply {
+    argumentValidator = {
+      Snowflake(toULong())
     }
   }
 }
