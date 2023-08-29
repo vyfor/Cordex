@@ -167,7 +167,7 @@ Names are optional; Cordex obtains them from variable names, using the first let
  
 ### Beyond the Basics
 
-Elevate your arguments with optional arguments, default values, multi-values, and validators:
+Arguments may be optional, hold default values, accept multiple values, and have validators:
 
 ```kt
 val name by option().multiple(1..2) // List<String> (min: 1, max: 2)
@@ -186,8 +186,8 @@ Cordex provides a range of predefined validators you can utilize:
 
 **Reference types:**
 `url()`
-`color()`
 `duration()`
+`color()`
 
 **And more:**
 `user()`
@@ -198,7 +198,7 @@ Cordex provides a range of predefined validators you can utilize:
 `customEmoji()`
 
 > [!NOTE]
-> Methods like these combine multiple input values (from multi-value arguments) into a single string and then tries to convert it to the appropriate type.
+> These methods combine multiple input values (from multi-value arguments) into a single string and try to convert it to the appropriate type.
 > 
 > If you want each input value to be converted separately, use the same function with a plural name. *e.g.* `users()` `roles()` 
 
