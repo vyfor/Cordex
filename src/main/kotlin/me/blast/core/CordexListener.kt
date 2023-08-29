@@ -1,7 +1,7 @@
 package me.blast.core
 
 import kotlinx.coroutines.launch
-import me.blast.command.argument.Arguments
+import me.blast.command.Arguments
 import me.blast.command.Context
 import me.blast.parser.ArgumentsParser
 import me.blast.parser.exception.ArgumentException
@@ -45,13 +45,13 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
           EmbedBuilder().apply {
             setTitle(
               when (e) {
-                is ArgumentException.Invalid -> "Invalid value provided for argument ${e.argument.argumentName}"
-                is ArgumentException.Empty -> "No value provided for argument ${e.argument.argumentName}"
-                is ArgumentException.Insufficient -> "Insufficient amount of values provided for argument ${e.argument.argumentName}"
-                is ArgumentException.Missing -> "Missing required arguments: ${e.arguments.joinToString(", ") { it.argumentName }}"
+                is ArgumentException.Invalid -> "Invalid value provided for argument '${e.argument.argumentName}'"
+                is ArgumentException.Empty -> "No value provided for argument '${e.argument.argumentName}'"
+                is ArgumentException.Insufficient -> "Insufficient amount of values provided for argument '${e.argument.argumentName}'"
+                is ArgumentException.Missing -> "Missing required arguments: ${e.arguments.joinToString(prefix = "'", separator = "', '", postfix = "'") { it.argumentName!! }}"
               }
             )
-            setDescription(generateArgumentError(e))
+            setDescription("```ansi\n${generateArgumentError(e)}\n```")
             setColor(Color.RED)
           }
         )

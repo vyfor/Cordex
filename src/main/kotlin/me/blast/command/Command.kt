@@ -1,6 +1,6 @@
 package me.blast.command
 
-import me.blast.command.argument.Arguments
+import me.blast.command.argument.builder.ArgumentBuilder
 import org.javacord.api.entity.permission.PermissionType
 
 abstract class Command(
@@ -14,7 +14,7 @@ abstract class Command(
   val subcommands: List<Command>? = null,
   val runAsDefault: Boolean = false,
   override val guildOnly: Boolean = false,
-) : CommandImpl(guildOnly) {
+) : ArgumentBuilder(guildOnly) {
   val name = name.lowercase()
   val aliases = aliases?.map { it.lowercase() }
   

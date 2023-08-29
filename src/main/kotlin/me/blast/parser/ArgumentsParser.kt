@@ -1,14 +1,14 @@
 package me.blast.parser
 
-import me.blast.command.CommandImpl
-import me.blast.command.argument.ArgumentType
+import me.blast.command.argument.Argument
+import me.blast.command.argument.builder.ArgumentType
 import me.blast.parser.exception.ArgumentException
 import me.blast.utils.Utils.takeWhileWithIndex
 import org.javacord.api.event.message.MessageCreateEvent
 
 object ArgumentsParser {
   @Throws(ArgumentException::class, IllegalArgumentException::class)
-  fun parse(input: List<String>, options: List<CommandImpl.Delegate<*>>, event: MessageCreateEvent, guildOnly: Boolean): Map<String, Any> {
+  fun parse(input: List<String>, options: List<Argument<*>>, event: MessageCreateEvent, guildOnly: Boolean): Map<String, Any> {
     val args = input.listIterator()
     val validationList = options.toMutableList()
     val map = mutableMapOf<String, Any>()
@@ -21,7 +21,7 @@ object ArgumentsParser {
       }
       if(arg != null) {
         if (guildOnly) arg.argumentEvent = event
-        map[arg.argumentName] = when (arg.argumentType) {
+        map[arg.argumentName!!] = when (arg.argumentType) {
           ArgumentType.FLAG -> true
           
           ArgumentType.OPTION,

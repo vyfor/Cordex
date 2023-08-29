@@ -1,4 +1,4 @@
-package me.blast.command.argument
+package me.blast.command.argument.builder
 
 enum class ArgumentType {
   OPTION,

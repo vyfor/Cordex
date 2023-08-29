@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.future.await
 import me.blast.command.Command
 import me.blast.parser.exception.ArgumentException
 import org.javacord.api.DiscordApi
@@ -20,7 +21,7 @@ object Cordex {
 class CordexBuilder(token: String) {
   val config = CordexConfiguration()
   val handler = CordexCommands()
-  val api: DiscordApiBuilder = DiscordApiBuilder().setToken(token)
+  val api = DiscordApiBuilder().setToken(token)
   
   /**
    * Set a function for determining the command prefix.
@@ -81,7 +82,7 @@ suspend inline fun cordex(
   CordexBuilder(token).run {
     block()
     api.loginAllShards().map {
-      emit(it.join().apply {
+      emit(it.await().apply {
         addListener(CordexListener(this@run))
       })
     }
