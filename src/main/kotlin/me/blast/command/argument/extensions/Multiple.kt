@@ -277,22 +277,26 @@ fun MultiValueArgument<*>.messages(searchMutualGuilds: Boolean = false, includeP
   return (this as Argument<List<Message>>).apply {
     argumentListValidator = {
       map {
-        val matchResult = DiscordRegexPattern.MESSAGE_LINK.toRegex().matchEntire(it) ?: throw IllegalArgumentException()
-        if (matchResult.groups["server"] == null) {
-          require(includePrivateChannels)
-          argumentEvent.messageAuthor.asUser().get().openPrivateChannel().get()
-            .getMessageById(matchResult.groups["message"]!!.value).get()
+        val matchResult = DiscordRegexPattern.MESSAGE_LINK.toRegex().matchEntire(it)
+        if(matchResult == null) {
+          argumentEvent.channel.getMessageById(Utils.extractDigits(it)).get()
         } else {
-          try {
-            argumentEvent.server.get().getTextChannelById(matchResult.groups["channel"]!!.value).get().takeIf { it.canSee(argumentEvent.messageAuthor.asUser().get()) }!!
+          if (matchResult.groups["server"] == null) {
+            require(includePrivateChannels)
+            argumentEvent.messageAuthor.asUser().get().openPrivateChannel().get()
               .getMessageById(matchResult.groups["message"]!!.value).get()
-          } catch (_: NullPointerException) {
-            throw IllegalAccessException()
-          } catch (_: Exception) {
-            throwUnless(searchMutualGuilds) {
-              argumentEvent.messageAuthor.asUser().get().mutualServers.find { it.idAsString == matchResult.groups["server"]!!.value }!!
-                .getTextChannelById(matchResult.groups["channel"]!!.value).get().takeIf { it.canSee(argumentEvent.messageAuthor.asUser().get()) }!!
+          } else {
+            try {
+              argumentEvent.server.get().getTextChannelById(matchResult.groups["channel"]!!.value).get().takeIf { it.canSee(argumentEvent.messageAuthor.asUser().get()) }!!
                 .getMessageById(matchResult.groups["message"]!!.value).get()
+            } catch (_: NullPointerException) {
+              throw IllegalAccessException()
+            } catch (_: Exception) {
+              throwUnless(searchMutualGuilds) {
+                argumentEvent.messageAuthor.asUser().get().mutualServers.find { it.idAsString == matchResult.groups["server"]!!.value }!!
+                  .getTextChannelById(matchResult.groups["channel"]!!.value).get().takeIf { it.canSee(argumentEvent.messageAuthor.asUser().get()) }!!
+                  .getMessageById(matchResult.groups["message"]!!.value).get()
+              }
             }
           }
         }
