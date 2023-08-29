@@ -28,9 +28,7 @@ object Utils {
     "MMMM d",
     "yyyy"
   )
-  val lazyEmptyList by lazy {
-    emptyList<Any>()
-  }
+  val lazyEmptyList = emptyList<Any>()
   
   fun loadClasses(packageName: String): List<Class<*>> {
     fun findClasses(dir: File, packageName: String): List<Class<*>> {
