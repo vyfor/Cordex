@@ -2,6 +2,7 @@ package me.blast.core
 
 import me.blast.command.Command
 import me.blast.utils.Utils
+import kotlin.system.measureTimeMillis
 
 class CordexCommands {
   private val commands = mutableMapOf<String, Command>()
@@ -41,17 +42,20 @@ class CordexCommands {
    * code files for applicable classes extending [Command] class.*
    */
   fun load(packageName: String = "") {
-    Utils.loadClasses(packageName).filter {
-      it.superclass == Command::class.java
-    }.forEach { command ->
-      try {
-        val constructor = command.getDeclaredConstructor(null)
-        constructor.isAccessible = true
-        register(constructor.newInstance() as Command)
-      } catch (e: Exception) {
-        Cordex.logger.error("Could not load class ${command.name}!", e)
+    val millis = measureTimeMillis {
+      Utils.loadClasses(packageName).filter {
+        it.superclass == Command::class.java
+      }.forEach { command ->
+        try {
+          val constructor = command.getDeclaredConstructor()
+          constructor.isAccessible = true
+          register(constructor.newInstance() as Command)
+        } catch (e: Exception) {
+          Cordex.logger.error("Could not load class ${command.name}!", e.cause)
+        }
       }
     }
+    Cordex.logger.info("Took ${millis}ms to load commands from ${packageName}.")
   }
   
   /**

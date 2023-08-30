@@ -47,8 +47,12 @@ open class Argument<T>(copyFrom: Argument<*>? = null, val options: ArrayList<Arg
   operator fun getValue(thisRef: Any?, property: KProperty<*>) = this
   
   operator fun provideDelegate(thisRef: Any?, property: KProperty<*>): Argument<T> {
-    if (argumentName == null) argumentName = Utils.convertCamelToKebab(property.name) else require(argumentName!!.isNotBlank())
-    if (argumentShortName == null && argumentType != ArgumentType.POSITIONAL) argumentShortName = argumentName!!.substring(0, 1) else require(argumentShortName!!.isNotBlank())
+    if (argumentName == null) argumentName = Utils.convertCamelToKebab(property.name)
+    else require(argumentName!!.isNotBlank())
+    if(argumentType != ArgumentType.POSITIONAL) {
+      if (argumentShortName == null) argumentShortName = property.name.substring(0, 1)
+      else require(argumentShortName!!.isNotBlank())
+    }
     require(argumentRange.first >= 0 || argumentRange.last >= 0) { "Argument's range must be positive!" }
     if (argumentRange.first == 0) argumentIsOptional = true
     require(options.none { it.argumentName == argumentName || it.argumentShortName == argumentShortName }) { "Argument with name --${argumentName} or -${argumentShortName} already exists!" }
