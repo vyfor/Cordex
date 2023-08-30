@@ -5,6 +5,7 @@ package me.blast.utils
 import me.blast.command.Command
 import me.blast.command.argument.Argument
 import me.blast.command.argument.builder.ArgumentType
+import me.blast.core.Cordex
 import me.blast.parser.exception.ArgumentException
 import org.javacord.api.entity.message.MessageAuthor
 import org.javacord.api.entity.message.embed.EmbedBuilder
@@ -31,6 +32,7 @@ object Utils {
   val lazyEmptyList = emptyList<Any>()
   
   fun loadClasses(packageName: String): List<Class<*>> {
+    val classLoader = Thread.currentThread().contextClassLoader
     fun findClasses(dir: File, packageName: String): List<Class<*>> {
       val classes = mutableListOf<Class<*>>()
       if (!dir.exists()) {
@@ -42,13 +44,18 @@ object Utils {
           assert(!file.name.contains("."))
           classes.addAll(findClasses(file, "$packageName.${file.name}"))
         } else if (file.name.endsWith(".class")) {
-          classes.add(Class.forName("$packageName.${file.name.substring(0, file.name.length - 6)}"))
+          val clazz = try {
+            Class.forName("$packageName.${file.name.substring(0, file.name.length - 6)}", true, classLoader)
+          } catch (e: ExceptionInInitializerError) {
+            Cordex.logger.trace("$packageName.${file.name}", e)
+            continue
+          }
+          classes.add(clazz)
         }
       }
       return classes
     }
     
-    val classLoader = Thread.currentThread().contextClassLoader
     val path = packageName.replace('.', '/')
     val resources = classLoader.getResources(path)
     val dirs = mutableListOf<File>()
