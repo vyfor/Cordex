@@ -2,7 +2,7 @@ jdk:
   - openjdk8
 
 install:
-  - ./gradlew clean assemble
+  - ./gradlew clean publishToMavenLocal
 
 script:
   - ./gradlew build

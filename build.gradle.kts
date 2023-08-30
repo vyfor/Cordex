@@ -1,7 +1,7 @@
 plugins {
     kotlin("jvm") version "1.9.0"
     id("org.jetbrains.dokka") version "1.8.20"
-    `maven-publish`
+    id("maven-publish")
 }
 
 group = "com.github.reblast"
@@ -10,6 +10,7 @@ version = "0.2.2"
 repositories {
     mavenCentral()
     maven("https://oss.sonatype.org/content/repositories/snapshots/")
+    maven("https://jitpack.io")
 }
 
 dependencies {
@@ -48,11 +49,12 @@ tasks {
 publishing {
     publications {
         create<MavenPublication>("release") {
+            from(components["kotlin"])
+            
             groupId = project.group as String
             artifactId = project.name
             version = project.version as String
             
-            from(components["kotlin"])
             artifact(sourcesJar)
             artifact(dokka)
         }
