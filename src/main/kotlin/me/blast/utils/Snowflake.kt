@@ -4,9 +4,17 @@ package me.blast.utils
 
 import java.time.Instant
 
-class Snowflake(val id: ULong) {
-  val creationDate = Instant.ofEpochSecond(((id.toLong() shr 22) + 1420070400000) / 1000)
-  val workerId = (id and 0x3E0000u) shr 17
-  val processId = (id and 0x1F000u) shr 12
-  val sequence = id and 0xFFFu
+class Snowflake(val id: Long) {
+  val creationDate: Instant by lazy {
+    Instant.ofEpochMilli((id shr 22) + 1420070400000)
+  }
+  val workerId: Long by lazy {
+    (id and 0x3E0000) shr 17
+  }
+  val processId: Long by lazy {
+    (id and 0x1F000) shr 12
+  }
+  val sequence: Long by lazy {
+    id and 0xFFF
+  }
 }
