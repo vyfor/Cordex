@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.github.reblast"
-version = "0.2.1"
+version = "0.2.2"
 
 repositories {
     mavenCentral()
@@ -30,11 +30,18 @@ val sourcesJar = task<Jar>("sourcesJar") {
     archiveClassifier.set("sources")
 }
 
+val dokka by tasks.register<Jar>("dokka") {
+    notCompatibleWithConfigurationCache("https://github.com/Kotlin/dokka/issues/1217")
+    dependsOn(tasks.dokkaJavadoc)
+    from(tasks.dokkaJavadoc.flatMap { it.outputDirectory })
+    archiveClassifier.set("javadoc")
+}
+
 tasks {
     build {
         dependsOn(sourcesJar)
         dependsOn(jar)
-        dependsOn(dokkaHtml)
+        dependsOn(dokka)
     }
 }
 
@@ -47,7 +54,7 @@ publishing {
             
             from(components["kotlin"])
             artifact(sourcesJar)
-            artifact(tasks.dokkaHtml)
+            artifact(dokka)
         }
     }
 }
