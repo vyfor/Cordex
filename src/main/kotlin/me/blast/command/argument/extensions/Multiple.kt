@@ -10,8 +10,7 @@ import me.blast.utils.Utils.hasValue
 import me.blast.utils.throwUnless
 import net.fellbaum.jemoji.Emoji
 import net.fellbaum.jemoji.EmojiManager
-import org.javacord.api.entity.channel.ChannelCategory
-import org.javacord.api.entity.channel.ServerChannel
+import org.javacord.api.entity.channel.*
 import org.javacord.api.entity.emoji.CustomEmoji
 import org.javacord.api.entity.message.Message
 import org.javacord.api.entity.permission.Role
@@ -42,6 +41,23 @@ fun MultiValueArgument<*>.ints(): Argument<List<Int>> {
 }
 
 /**
+ * Converts the argument values to unsigned integers.
+ *
+ * Use [uInt] to convert multiple values into a single one.
+ *
+ * @return An Argument containing a list with retrieved [UInt] values.
+ */
+fun MultiValueArgument<*>.uInts(): Argument<List<UInt>> {
+  return (this as Argument<List<UInt>>).apply {
+    argumentListValidator = {
+      map {
+        it.toUInt()
+      }
+    }
+  }
+}
+
+/**
  * Converts the argument values to long values.
  *
  * Use [long] to convert multiple values into a single one.
@@ -53,6 +69,23 @@ fun MultiValueArgument<*>.longs(): Argument<List<Long>> {
     argumentListValidator = {
       map {
         it.toLong()
+      }
+    }
+  }
+}
+
+/**
+ * Converts the argument values to unsigned long values.
+ *
+ * Use [uLong] to convert multiple values into a single one.
+ *
+ * @return An Argument containing a list with retrieved [ULong] values.
+ */
+fun MultiValueArgument<*>.uLongs(): Argument<List<ULong>> {
+  return (this as Argument<List<ULong>>).apply {
+    argumentListValidator = {
+      map {
+        it.toULong()
       }
     }
   }
@@ -92,22 +125,6 @@ fun MultiValueArgument<*>.doubles(): Argument<List<Double>> {
   }
 }
 
-/**
- * Converts the argument values to [URL]s.
- *
- * Use [url] to convert multiple values into a single one.
- *
- * @return An Argument containing a list with retrieved [URL] values.
- */
-fun MultiValueArgument<*>.urls(): Argument<List<URL>> {
-  return (this as Argument<List<URL>>).apply {
-    argumentListValidator = {
-      map {
-        URL(it)
-      }
-    }
-  }
-}
 
 /**
  * Retrieves [User]s based on the argument values.
@@ -123,8 +140,8 @@ fun MultiValueArgument<*>.users(searchMutualGuilds: Boolean = false): Argument<L
       map {
         if (guildOnly) {
           argumentEvent.server.get().let { server ->
-            server.getMembersByDisplayNameIgnoreCase(it).firstOrNull() ?: server.getMemberByDiscriminatedName(it).orElse(
-              server.getMemberById(Utils.extractDigits(it)).orElse(
+            server.getMemberById(Utils.extractDigits(it)).orElse(
+              server.getMembersByDisplayNameIgnoreCase(it).firstOrNull() ?: server.getMembersByNameIgnoreCase(it).firstOrNull() ?: server.getMembersByNameIgnoreCase(it).firstOrNull() ?: server.getMemberByDiscriminatedName(it).orElse(
                 server.getMembersByNameIgnoreCase(it).first()
               )
             )
@@ -132,8 +149,8 @@ fun MultiValueArgument<*>.users(searchMutualGuilds: Boolean = false): Argument<L
         } else {
           throwUnless(searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
             argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
-              server.getMembersByDisplayNameIgnoreCase(it).firstOrNull() ?: server.getMemberByDiscriminatedName(it).orElse(
-                server.getMemberById(Utils.extractDigits(it)).orElse(
+              server.getMemberById(Utils.extractDigits(it)).orElse(
+                server.getMembersByDisplayNameIgnoreCase(it).firstOrNull() ?: server.getMembersByNameIgnoreCase(it).firstOrNull() ?: server.getMembersByNameIgnoreCase(it).firstOrNull() ?: server.getMemberByDiscriminatedName(it).orElse(
                   server.getMembersByNameIgnoreCase(it).firstOrNull()
                 )
               )
@@ -159,12 +176,12 @@ fun MultiValueArgument<*>.channels(searchMutualGuilds: Boolean = false): Argumen
       map {
         if (guildOnly) {
           argumentEvent.server.get().let { server ->
-            server.getChannelsByNameIgnoreCase(it).firstOrNull() ?: server.getChannelById(Utils.extractDigits(it)).get()
+            server.getChannelById(Utils.extractDigits(it)).orElse(null) ?: server.getChannelsByNameIgnoreCase(it).first()
           }
         } else {
           throwUnless(searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
             argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
-              server.getChannelsByNameIgnoreCase(it).firstOrNull() ?: server.getChannelById(Utils.extractDigits(it)).orElse(null)
+              server.getChannelById(Utils.extractDigits(it)).orElse(null) ?: server.getChannelsByNameIgnoreCase(it).firstOrNull()
             }
           }
         }
@@ -188,12 +205,12 @@ inline fun <reified R : ServerChannel> MultiValueArgument<*>.channels(vararg typ
       map {
         val channel = if (guildOnly) {
           argumentEvent.server.get().let { server ->
-            server.getChannelsByNameIgnoreCase(it).firstOrNull() ?: server.getChannelById(Utils.extractDigits(it)).get()
+            server.getChannelById(Utils.extractDigits(it)).orElse(null) ?: server.getChannelsByNameIgnoreCase(it).first()
           }
         } else {
           throwUnless(searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
             argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
-              server.getChannelsByNameIgnoreCase(it).firstOrNull() ?: server.getChannelById(Utils.extractDigits(it)).orElse(null)
+              server.getChannelById(Utils.extractDigits(it)).orElse(null) ?: server.getChannelsByNameIgnoreCase(it).firstOrNull()
             }
           }
         }
@@ -203,6 +220,142 @@ inline fun <reified R : ServerChannel> MultiValueArgument<*>.channels(vararg typ
           channel as R
         } else {
           throw IllegalArgumentException()
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Retrieves [ServerTextChannel]s based on the argument values.
+ *
+ * Use [textChannel] to convert multiple values into a single one.
+ *
+ * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
+ * @return An Argument containing a list with retrieved [ServerTextChannel] values.
+ */
+fun MultiValueArgument<*>.textChannels(searchMutualGuilds: Boolean = false): Argument<List<ServerTextChannel>> {
+  return (this as Argument<List<ServerTextChannel>>).apply {
+    argumentListValidator = {
+      map {
+        if (guildOnly) {
+          argumentEvent.server.get().let { server ->
+            server.getTextChannelById(Utils.extractDigits(it)).orElse(null) ?: server.getTextChannelsByNameIgnoreCase(it).first()
+          }
+        } else {
+          throwUnless(searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
+            argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+              server.getTextChannelById(Utils.extractDigits(it)).orElse(null) ?: server.getTextChannelsByNameIgnoreCase(it).firstOrNull()
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Retrieves [ServerVoiceChannel]s based on the argument values.
+ *
+ * Use [voiceChannel] to convert multiple values into a single one.
+ *
+ * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
+ * @return An Argument containing a list with retrieved [ServerVoiceChannel] values.
+ */
+fun MultiValueArgument<*>.voiceChannels(searchMutualGuilds: Boolean = false): Argument<List<ServerVoiceChannel>> {
+  return (this as Argument<List<ServerVoiceChannel>>).apply {
+    argumentListValidator = {
+      map {
+        if (guildOnly) {
+          argumentEvent.server.get().let { server ->
+            server.getVoiceChannelById(Utils.extractDigits(it)).orElse(null) ?: server.getVoiceChannelsByNameIgnoreCase(it).first()
+          }
+        } else {
+          throwUnless(searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
+            argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+              server.getVoiceChannelById(Utils.extractDigits(it)).orElse(null) ?: server.getVoiceChannelsByNameIgnoreCase(it).firstOrNull()
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Retrieves [ServerThreadChannel]s based on the argument values.
+ *
+ * Use [threadChannel] to convert multiple values into a single one.
+ *
+ * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
+ * @return An Argument containing a list with retrieved [ServerThreadChannel] values.
+ */
+fun MultiValueArgument<*>.threadChannels(searchMutualGuilds: Boolean = false): Argument<List<ServerThreadChannel>> {
+  return (this as Argument<List<ServerThreadChannel>>).apply {
+    argumentListValidator = {
+      map {
+        if (guildOnly) {
+          argumentEvent.server.get().getThreadChannelById(Utils.extractDigits(it)).get()
+        } else {
+          throwUnless(searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
+            argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+              server.getThreadChannelById(Utils.extractDigits(it)).orElse(null)
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Retrieves [ServerStageVoiceChannel]s based on the argument values.
+ *
+ * Use [stageChannel] to convert multiple values into a single one.
+ *
+ * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
+ * @return An Argument containing a list with retrieved [ServerStageVoiceChannel] values.
+ */
+fun MultiValueArgument<*>.stageChannels(searchMutualGuilds: Boolean = false): Argument<List<ServerStageVoiceChannel>> {
+  return (this as Argument<List<ServerStageVoiceChannel>>).apply {
+    argumentListValidator = {
+      map {
+        if (guildOnly) {
+          argumentEvent.server.get().getStageVoiceChannelById(Utils.extractDigits(it)).get()
+        } else {
+          throwUnless(searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
+            argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+              server.getStageVoiceChannelById(Utils.extractDigits(it)).orElse(null)
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Retrieves [ServerForumChannel]s based on the argument values.
+ *
+ * Use [forumChannel] to convert multiple values into a single one.
+ *
+ * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
+ * @return An Argument containing a list with retrieved [ServerForumChannel] values.
+ */
+fun MultiValueArgument<*>.forumChannels(searchMutualGuilds: Boolean = false): Argument<List<ServerForumChannel>> {
+  return (this as Argument<List<ServerForumChannel>>).apply {
+    argumentListValidator = {
+      map {
+        if (guildOnly) {
+          argumentEvent.server.get().let { server ->
+            server.getForumChannelById(Utils.extractDigits(it)).orElse(null) ?: server.getForumChannelsByNameIgnoreCase(it).first()
+          }
+        } else {
+          throwUnless(searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
+            argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+              server.getForumChannelById(Utils.extractDigits(it)).orElse(null) ?: server.getForumChannelsByNameIgnoreCase(it).firstOrNull()
+            }
+          }
         }
       }
     }
@@ -223,12 +376,12 @@ fun MultiValueArgument<*>.categories(searchMutualGuilds: Boolean = false): Argum
       map {
         if (guildOnly) {
           argumentEvent.server.get().let { server ->
-            server.getChannelCategoriesByNameIgnoreCase(it).firstOrNull() ?: server.getChannelCategoryById(Utils.extractDigits(it)).get()
+            server.getChannelCategoryById(it).orElse(null) ?: server.getChannelCategoriesByNameIgnoreCase(it).first()
           }
         } else {
           throwUnless(searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
             argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
-              server.getChannelCategoriesByNameIgnoreCase(it).firstOrNull() ?: server.getChannelCategoryById(Utils.extractDigits(it)).orElse(null)
+              server.getChannelCategoryById(it).orElse(null) ?: server.getChannelCategoriesByNameIgnoreCase(it).firstOrNull()
             }
           }
         }
@@ -251,12 +404,12 @@ fun MultiValueArgument<*>.roles(searchMutualGuilds: Boolean = false): Argument<L
       map {
         if (guildOnly) {
           argumentEvent.server.get().let { server ->
-            server.getRolesByNameIgnoreCase(it).firstOrNull() ?: server.getRoleById(Utils.extractDigits(it)).get()
+            server.getRoleById(Utils.extractDigits(it)).orElse(null) ?: server.getRolesByNameIgnoreCase(it).first()
           }
         } else {
           throwUnless(searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
             argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
-              server.getRolesByNameIgnoreCase(it).firstOrNull() ?: server.getRoleById(Utils.extractDigits(it)).orElse(null)
+              server.getRoleById(Utils.extractDigits(it)).orElse(null) ?: server.getRolesByNameIgnoreCase(it).firstOrNull()
             }
           }
         }
@@ -280,7 +433,7 @@ fun MultiValueArgument<*>.messages(searchMutualGuilds: Boolean = false, includeP
       map {
         val matchResult = DiscordRegexPattern.MESSAGE_LINK.toRegex().matchEntire(it)
         if(matchResult == null) {
-          argumentEvent.channel.getMessageById(Utils.extractDigits(it)).get()
+          argumentEvent.channel.getMessageById(it).get()
         } else {
           if (matchResult.groups["server"] == null) {
             require(includePrivateChannels)
@@ -344,7 +497,24 @@ fun MultiValueArgument<*>.snowflakes(): Argument<List<Snowflake>> {
   return (this as Argument<List<Snowflake>>).apply {
     argumentValidator = {
       map {
-        Snowflake(toULong())
+        Snowflake(toLong().takeIf { it > 0 }!!)
+      }
+    }
+  }
+}
+
+/**
+ * Converts the argument values to [URL]s.
+ *
+ * Use [url] to convert multiple values into a single one.
+ *
+ * @return An Argument containing a list with retrieved [URL] values.
+ */
+fun MultiValueArgument<*>.urls(): Argument<List<URL>> {
+  return (this as Argument<List<URL>>).apply {
+    argumentListValidator = {
+      map {
+        URL(it)
       }
     }
   }
