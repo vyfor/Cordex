@@ -28,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.reblast:Cordex:0.2.1")
+    implementation("com.github.reblast:Cordex:0.2.2")
 }
 ```
 
@@ -44,7 +44,7 @@ dependencies {
 <dependency>
     <groupId>com.github.reblast</groupId>
     <artifactId>Cordex</artifactId>
-    <version>0.2.1</version>
+    <version>0.2.2</version>
 </dependency>
 ```
 
@@ -174,31 +174,35 @@ val name by option().multiple(1..2) // List<String> (min: 1, max: 2)
 val age by option().optional(18) { toInt() } // Int? (default: 18)
 ```
 
-#### Predefined validators
+### Predefined validators
 
 Cordex provides a range of predefined validators you can utilize:
 
-**Primitive types:**
-`int()`
-`long()`
-`float()`
-`double()`
+#### Primitive types
+- `int()` `uInt()`
+- `long()` `uLong()`
+- `float()`
+- `double()`
 
-**Reference types:**
-`url()`
-`duration()`
-`color()`
+#### Discord entities
+- `user()`
+- `role()`
+- `category()`
+- `message()`
+- `customEmoji()`
+- `snowflake()`
+- `textChannel()` `voiceChannel()` `threadChannel()` `stageChannel()` `forumChannel()` `channel(types...)`
 
-**And more:**
-`user()`
-`channel()`
-`category()`
-`role()`
-`unicodeEmoji()`
-`customEmoji()`
+#### And more
+- `url()`
+- `duration()`
+- `date()`
+- `color()`
+- `unicodeEmoji()`
+- `enum()`
 
 > [!NOTE]
-> These methods combine multiple input values (from multi-value arguments) into a single string and try to convert it to the appropriate type.
+> These methods combine multiple input values (from multi-value arguments) into a single string and try to convert the combined result to the appropriate type.
 > 
 > If you want each input value to be converted separately, use the same function with a plural name. *e.g.* `users()` `roles()` 
 
@@ -214,4 +218,4 @@ Cordex provides a range of predefined validators you can utilize:
 
 ## 📝 TODO
 - [ ] Add support for slash commands and attachments.
-- [ ] Provide support for other minor features. (cooldowns, permissions, categories, help message)
+- [ ] Provide support for other minor features. (cooldowns, permissions, categories)
