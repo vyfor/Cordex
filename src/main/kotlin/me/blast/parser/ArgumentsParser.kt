@@ -43,7 +43,6 @@ object ArgumentsParser {
               try {
                 arg.argumentValidator?.invoke(arguments.joinToString(" ")) ?: arg.argumentListValidator?.invoke(arguments) ?: arg.argumentDefaultValue ?: throw ArgumentException.Invalid(arg, arguments.joinToString(" "))
               } catch (e: Exception) {
-                e.printStackTrace()
                 throw ArgumentException.Invalid(arg, arguments.joinToString(" "))
               }
             } else {
@@ -57,7 +56,6 @@ object ArgumentsParser {
               try {
                 arg.argumentValidator?.invoke(nextArg) ?: arg.argumentDefaultValue ?: throw ArgumentException.Invalid(arg, nextArg)
               } catch (e: Exception) {
-                e.printStackTrace()
                 throw ArgumentException.Invalid(arg, nextArg)
               }
             }
