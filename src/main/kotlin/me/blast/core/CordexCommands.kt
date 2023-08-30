@@ -45,7 +45,7 @@ class CordexCommands {
       it.superclass == Command::class.java
     }.forEach { command ->
       try {
-        val constructor = command.getDeclaredConstructor()
+        val constructor = command.getDeclaredConstructor(null)
         constructor.isAccessible = true
         register(constructor.newInstance() as Command)
       } catch (e: Exception) {
