@@ -3,7 +3,7 @@
 package me.blast.command.argument.extensions
 
 import me.blast.command.argument.Argument
-import me.blast.command.argument.OptionalMultiValueArgument
+import me.blast.command.argument.DefaultArg
 import me.blast.utils.Snowflake
 import me.blast.utils.Utils
 import me.blast.utils.Utils.hasValue
@@ -30,8 +30,8 @@ import kotlin.reflect.KClass
  *
  * @return An Argument containing the retrieved nullable [Int] value.
  */
-fun OptionalMultiValueArgument<*>.int(): Argument<Int?> {
-  return (this as Argument<Int?>).apply {
+fun DefaultArg<*>.int(): Argument<Int> {
+  return (this as Argument<Int>).apply {
     argumentValidator = { toInt() }
   }
 }
@@ -42,8 +42,8 @@ fun OptionalMultiValueArgument<*>.int(): Argument<Int?> {
  * Use [uInts] to convert each value separately.
  * @return An Argument containing the retrieved nullable [UInt] value.
  */
-fun OptionalMultiValueArgument<*>.uInt(): Argument<UInt?> {
-  return (this as Argument<UInt?>).apply {
+fun DefaultArg<*>.uInt(): Argument<UInt> {
+  return (this as Argument<UInt>).apply {
     argumentValidator = { toUInt() }
   }
 }
@@ -55,8 +55,8 @@ fun OptionalMultiValueArgument<*>.uInt(): Argument<UInt?> {
  *
  * @return An Argument containing the retrieved nullable [Long] value.
  */
-fun OptionalMultiValueArgument<*>.long(): Argument<Long?> {
-  return (this as Argument<Long?>).apply {
+fun DefaultArg<*>.long(): Argument<Long> {
+  return (this as Argument<Long>).apply {
     argumentValidator = { toLong() }
   }
 }
@@ -68,8 +68,8 @@ fun OptionalMultiValueArgument<*>.long(): Argument<Long?> {
  *
  * @return An Argument containing the retrieved nullable [ULong] value.
  */
-fun OptionalMultiValueArgument<*>.uLong(): Argument<ULong?> {
-  return (this as Argument<ULong?>).apply {
+fun DefaultArg<*>.uLong(): Argument<ULong> {
+  return (this as Argument<ULong>).apply {
     argumentValidator = { toULong() }
   }
 }
@@ -81,8 +81,8 @@ fun OptionalMultiValueArgument<*>.uLong(): Argument<ULong?> {
  *
  * @return An Argument containing the retrieved nullable [Float] value.
  */
-fun OptionalMultiValueArgument<*>.float(): Argument<Float?> {
-  return (this as Argument<Float?>).apply {
+fun DefaultArg<*>.float(): Argument<Float> {
+  return (this as Argument<Float>).apply {
     argumentValidator = { toFloat() }
   }
 }
@@ -94,8 +94,8 @@ fun OptionalMultiValueArgument<*>.float(): Argument<Float?> {
  *
  * @return An Argument containing the retrieved nullable [Double] value.
  */
-fun OptionalMultiValueArgument<*>.double(): Argument<Double?> {
-  return (this as Argument<Double?>).apply {
+fun DefaultArg<*>.double(): Argument<Double> {
+  return (this as Argument<Double>).apply {
     argumentValidator = { toDouble() }
   }
 }
@@ -108,25 +108,25 @@ fun OptionalMultiValueArgument<*>.double(): Argument<Double?> {
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved nullable [User] value.
  */
-fun OptionalMultiValueArgument<*>.user(searchMutualGuilds: Boolean = false): Argument<User?> {
-  return (this as Argument<User?>).apply {
+fun DefaultArg<*>.user(searchMutualGuilds: Boolean = false): Argument<User> {
+  return (this as Argument<User>).apply {
     argumentValidator = {
       if (guildOnly) {
         argumentEvent.server.get().let { server ->
-          server.getMemberById(Utils.extractDigits(this)).orElse(
-            server.getMembersByDisplayNameIgnoreCase(this).firstOrNull() ?: server.getMembersByNameIgnoreCase(this).firstOrNull() ?: server.getMembersByNameIgnoreCase(this).firstOrNull() ?: server.getMemberByDiscriminatedName(this).orElse(
+          server.getMemberById(Utils.extractDigits(this)).orElseGet {
+            server.getMembersByDisplayNameIgnoreCase(this).firstOrNull() ?: server.getMembersByNameIgnoreCase(this).firstOrNull() ?: server.getMembersByNameIgnoreCase(this).firstOrNull() ?: server.getMemberByDiscriminatedName(this).orElseGet {
               server.getMembersByNameIgnoreCase(this).first()
-            )
-          )
+            }
+          }
         }
       } else {
         throwUnless(searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
           argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
-            server.getMemberById(Utils.extractDigits(this)).orElse(
-              server.getMembersByDisplayNameIgnoreCase(this).firstOrNull() ?: server.getMembersByNameIgnoreCase(this).firstOrNull() ?: server.getMembersByNameIgnoreCase(this).firstOrNull() ?: server.getMemberByDiscriminatedName(this).orElse(
+            server.getMemberById(Utils.extractDigits(this)).orElseGet {
+              server.getMembersByDisplayNameIgnoreCase(this).firstOrNull() ?: server.getMembersByNameIgnoreCase(this).firstOrNull() ?: server.getMembersByNameIgnoreCase(this).firstOrNull() ?: server.getMemberByDiscriminatedName(this).orElseGet {
                 server.getMembersByNameIgnoreCase(this).firstOrNull()
-              )
-            )
+              }
+            }
           }
         }
       }
@@ -142,8 +142,8 @@ fun OptionalMultiValueArgument<*>.user(searchMutualGuilds: Boolean = false): Arg
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved nullable [ServerChannel] value.
  */
-fun OptionalMultiValueArgument<*>.channel(searchMutualGuilds: Boolean = false): Argument<ServerChannel?> {
-  return (this as Argument<ServerChannel?>).apply {
+fun DefaultArg<*>.channel(searchMutualGuilds: Boolean = false): Argument<ServerChannel> {
+  return (this as Argument<ServerChannel>).apply {
     argumentValidator = {
       if (guildOnly) {
         argumentEvent.server.get().let { server ->
@@ -169,8 +169,8 @@ fun OptionalMultiValueArgument<*>.channel(searchMutualGuilds: Boolean = false): 
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved nullable [ServerChannel] value.
  */
-inline fun <reified R : ServerChannel> OptionalMultiValueArgument<*>.channel(vararg types: KClass<out R>, searchMutualGuilds: Boolean = false): Argument<R?> {
-  return (this as Argument<R?>).apply {
+inline fun <reified R : ServerChannel> DefaultArg<*>.channel(vararg types: KClass<out R>, searchMutualGuilds: Boolean = false): Argument<R> {
+  return (this as Argument<R>).apply {
     argumentValidator = {
       val channel = if (guildOnly) {
         argumentEvent.server.get().let { server ->
@@ -202,8 +202,8 @@ inline fun <reified R : ServerChannel> OptionalMultiValueArgument<*>.channel(var
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved nullable [ServerTextChannel] value.
  */
-fun OptionalMultiValueArgument<*>.textChannel(searchMutualGuilds: Boolean = false): Argument<ServerTextChannel?> {
-  return (this as Argument<ServerTextChannel?>).apply {
+fun DefaultArg<*>.textChannel(searchMutualGuilds: Boolean = false): Argument<ServerTextChannel> {
+  return (this as Argument<ServerTextChannel>).apply {
     argumentValidator = {
       if (guildOnly) {
         argumentEvent.server.get().let { server ->
@@ -228,8 +228,8 @@ fun OptionalMultiValueArgument<*>.textChannel(searchMutualGuilds: Boolean = fals
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved nullable [ServerVoiceChannel] value.
  */
-fun OptionalMultiValueArgument<*>.voiceChannel(searchMutualGuilds: Boolean = false): Argument<ServerVoiceChannel?> {
-  return (this as Argument<ServerVoiceChannel?>).apply {
+fun DefaultArg<*>.voiceChannel(searchMutualGuilds: Boolean = false): Argument<ServerVoiceChannel> {
+  return (this as Argument<ServerVoiceChannel>).apply {
     argumentValidator = {
       if (guildOnly) {
         argumentEvent.server.get().let { server ->
@@ -254,8 +254,8 @@ fun OptionalMultiValueArgument<*>.voiceChannel(searchMutualGuilds: Boolean = fal
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved nullable [ServerThreadChannel] value.
  */
-fun OptionalMultiValueArgument<*>.threadChannel(searchMutualGuilds: Boolean = false): Argument<ServerThreadChannel?> {
-  return (this as Argument<ServerThreadChannel?>).apply {
+fun DefaultArg<*>.threadChannel(searchMutualGuilds: Boolean = false): Argument<ServerThreadChannel> {
+  return (this as Argument<ServerThreadChannel>).apply {
     argumentValidator = {
       if (guildOnly) {
         argumentEvent.server.get().getThreadChannelById(Utils.extractDigits(this)).get()
@@ -278,8 +278,8 @@ fun OptionalMultiValueArgument<*>.threadChannel(searchMutualGuilds: Boolean = fa
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved nullable [ServerStageVoiceChannel] value.
  */
-fun OptionalMultiValueArgument<*>.stageChannel(searchMutualGuilds: Boolean = false): Argument<ServerStageVoiceChannel?> {
-  return (this as Argument<ServerStageVoiceChannel?>).apply {
+fun DefaultArg<*>.stageChannel(searchMutualGuilds: Boolean = false): Argument<ServerStageVoiceChannel> {
+  return (this as Argument<ServerStageVoiceChannel>).apply {
     argumentValidator = {
       if (guildOnly) {
         argumentEvent.server.get().getStageVoiceChannelById(Utils.extractDigits(this)).get()
@@ -302,8 +302,8 @@ fun OptionalMultiValueArgument<*>.stageChannel(searchMutualGuilds: Boolean = fal
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved nullable [ServerForumChannel] value.
  */
-fun OptionalMultiValueArgument<*>.forumChannel(searchMutualGuilds: Boolean = false): Argument<ServerForumChannel?> {
-  return (this as Argument<ServerForumChannel?>).apply {
+fun DefaultArg<*>.forumChannel(searchMutualGuilds: Boolean = false): Argument<ServerForumChannel> {
+  return (this as Argument<ServerForumChannel>).apply {
     argumentValidator = {
       if (guildOnly) {
         argumentEvent.server.get().let { server ->
@@ -328,8 +328,8 @@ fun OptionalMultiValueArgument<*>.forumChannel(searchMutualGuilds: Boolean = fal
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved nullable [ChannelCategory] value.
  */
-fun OptionalMultiValueArgument<*>.category(searchMutualGuilds: Boolean = false): Argument<ChannelCategory?> {
-  return (this as Argument<ChannelCategory?>).apply {
+fun DefaultArg<*>.category(searchMutualGuilds: Boolean = false): Argument<ChannelCategory> {
+  return (this as Argument<ChannelCategory>).apply {
     argumentValidator = {
       if (guildOnly) {
         argumentEvent.server.get().let { server ->
@@ -354,8 +354,8 @@ fun OptionalMultiValueArgument<*>.category(searchMutualGuilds: Boolean = false):
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved nullable [Role] value.
  */
-fun OptionalMultiValueArgument<*>.role(searchMutualGuilds: Boolean = false): Argument<Role?> {
-  return (this as Argument<Role?>).apply {
+fun DefaultArg<*>.role(searchMutualGuilds: Boolean = false): Argument<Role> {
+  return (this as Argument<Role>).apply {
     argumentValidator = {
       if (guildOnly) {
         argumentEvent.server.get().let { server ->
@@ -381,8 +381,8 @@ fun OptionalMultiValueArgument<*>.role(searchMutualGuilds: Boolean = false): Arg
  * @param includePrivateChannels Whether to include messages in the private channel between the user and the bot in search. Defaults to false.
  * @return An Argument containing the retrieved nullable [Message] value.
  */
-fun OptionalMultiValueArgument<*>.message(searchMutualGuilds: Boolean = false, includePrivateChannels: Boolean = false): Argument<Message?> {
-  return (this as Argument<Message?>).apply {
+fun DefaultArg<*>.message(searchMutualGuilds: Boolean = false, includePrivateChannels: Boolean = false): Argument<Message> {
+  return (this as Argument<Message>).apply {
     argumentValidator = {
       val matchResult = DiscordRegexPattern.MESSAGE_LINK.toRegex().matchEntire(this)
       if(matchResult == null) {
@@ -419,8 +419,8 @@ fun OptionalMultiValueArgument<*>.message(searchMutualGuilds: Boolean = false, i
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved nullable [CustomEmoji] value.
  */
-fun OptionalMultiValueArgument<*>.customEmoji(searchMutualGuilds: Boolean = false): Argument<CustomEmoji?> {
-  return (this as Argument<CustomEmoji?>).apply {
+fun DefaultArg<*>.customEmoji(searchMutualGuilds: Boolean = false): Argument<CustomEmoji> {
+  return (this as Argument<CustomEmoji>).apply {
     argumentValidator = {
       val matchResult = DiscordRegexPattern.CUSTOM_EMOJI.toRegex().matchEntire(this) ?: throw IllegalArgumentException()
       if (guildOnly) {
@@ -443,8 +443,8 @@ fun OptionalMultiValueArgument<*>.customEmoji(searchMutualGuilds: Boolean = fals
  *
  * @return An Argument containing the retrieved nullable [Snowflake] value.
  */
-fun OptionalMultiValueArgument<*>.snowflake(): Argument<Snowflake?> {
-  return (this as Argument<Snowflake?>).apply {
+fun DefaultArg<*>.snowflake(): Argument<Snowflake> {
+  return (this as Argument<Snowflake>).apply {
     argumentValidator = {
       Snowflake(toLong().takeIf { it > 0 }!!)
     }
@@ -458,8 +458,8 @@ fun OptionalMultiValueArgument<*>.snowflake(): Argument<Snowflake?> {
  *
  * @return An Argument containing the retrieved nullable [URL] value.
  */
-fun OptionalMultiValueArgument<*>.url(): Argument<URL?> {
-  return (this as Argument<URL?>).apply {
+fun DefaultArg<*>.url(): Argument<URL> {
+  return (this as Argument<URL>).apply {
     argumentValidator = { URL(this) }
   }
 }
@@ -471,8 +471,8 @@ fun OptionalMultiValueArgument<*>.url(): Argument<URL?> {
  *
  * @return An Argument containing the retrieved nullable [Duration] value.
  */
-fun OptionalMultiValueArgument<*>.duration(): Argument<Duration?> {
-  return (this as Argument<Duration?>).apply {
+fun DefaultArg<*>.duration(): Argument<Duration> {
+  return (this as Argument<Duration>).apply {
     argumentValidator = {
       Utils.parseDuration(this) ?: throw IllegalArgumentException()
     }
@@ -487,8 +487,8 @@ fun OptionalMultiValueArgument<*>.duration(): Argument<Duration?> {
  * @param locale The locale used for date parsing. Defaults to [Locale.ENGLISH].
  * @return An Argument containing the retrieved nullable [LocalDate] value.
  */
-fun OptionalMultiValueArgument<*>.date(locale: Locale = Locale.ENGLISH): Argument<LocalDate?> {
-  return (this as Argument<LocalDate?>).apply {
+fun DefaultArg<*>.date(locale: Locale = Locale.ENGLISH): Argument<LocalDate> {
+  return (this as Argument<LocalDate>).apply {
     argumentValidator = {
       Utils.parseDate(this, locale) ?: throw IllegalArgumentException()
     }
@@ -502,8 +502,8 @@ fun OptionalMultiValueArgument<*>.date(locale: Locale = Locale.ENGLISH): Argumen
  *
  * @return An Argument containing the retrieved nullable [Color] value.
  */
-fun OptionalMultiValueArgument<*>.color(): Argument<Color?> {
-  return (this as Argument<Color?>).apply {
+fun DefaultArg<*>.color(): Argument<Color> {
+  return (this as Argument<Color>).apply {
     argumentValidator = {
       Color::class.java.getField(this)[null] as? Color ?: Color.decode(this)
     }
@@ -517,8 +517,8 @@ fun OptionalMultiValueArgument<*>.color(): Argument<Color?> {
  *
  * @return An Argument containing the retrieved nullable [Emoji] value.
  */
-fun OptionalMultiValueArgument<*>.unicodeEmoji(): Argument<Emoji?> {
-  return (this as Argument<Emoji?>).apply {
+fun DefaultArg<*>.unicodeEmoji(): Argument<Emoji> {
+  return (this as Argument<Emoji>).apply {
     argumentValidator = {
       EmojiManager.getEmoji(this).get()
     }
@@ -532,14 +532,10 @@ fun OptionalMultiValueArgument<*>.unicodeEmoji(): Argument<Emoji?> {
  *
  * @return An Argument containing the retrieved nullable enum value.
  */
-inline fun <reified T : Enum<T>> OptionalMultiValueArgument<*>.enum(): Argument<T?> {
-  return (this as Argument<T?>).apply {
+inline fun <reified T : Enum<T>> DefaultArg<*>.enum(): Argument<T> {
+  return (this as Argument<T>).apply {
     argumentValidator = {
-      try {
-        enumValueOf<T>(uppercase().replace(" ", "_"))
-      } catch (e: IllegalArgumentException) {
-        throw IllegalArgumentException()
-      }
+      enumValueOf<T>(uppercase().replace(" ", "_"))
     }
   }
 }

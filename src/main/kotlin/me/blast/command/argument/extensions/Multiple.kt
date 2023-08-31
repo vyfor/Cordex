@@ -3,7 +3,7 @@
 package me.blast.command.argument.extensions
 
 import me.blast.command.argument.Argument
-import me.blast.command.argument.MultiValueArgument
+import me.blast.command.argument.Multiple
 import me.blast.utils.Snowflake
 import me.blast.utils.Utils
 import me.blast.utils.Utils.hasValue
@@ -30,7 +30,7 @@ import kotlin.reflect.KClass
  *
  * @return An Argument containing a list with retrieved [Int] values.
  */
-fun MultiValueArgument<*>.ints(): Argument<List<Int>> {
+fun Multiple<*>.ints(): Argument<List<Int>> {
   return (this as Argument<List<Int>>).apply {
     argumentListValidator = {
       map {
@@ -47,7 +47,7 @@ fun MultiValueArgument<*>.ints(): Argument<List<Int>> {
  *
  * @return An Argument containing a list with retrieved [UInt] values.
  */
-fun MultiValueArgument<*>.uInts(): Argument<List<UInt>> {
+fun Multiple<*>.uInts(): Argument<List<UInt>> {
   return (this as Argument<List<UInt>>).apply {
     argumentListValidator = {
       map {
@@ -64,7 +64,7 @@ fun MultiValueArgument<*>.uInts(): Argument<List<UInt>> {
  *
  * @return An Argument containing a list with retrieved [Long] values.
  */
-fun MultiValueArgument<*>.longs(): Argument<List<Long>> {
+fun Multiple<*>.longs(): Argument<List<Long>> {
   return (this as Argument<List<Long>>).apply {
     argumentListValidator = {
       map {
@@ -81,7 +81,7 @@ fun MultiValueArgument<*>.longs(): Argument<List<Long>> {
  *
  * @return An Argument containing a list with retrieved [ULong] values.
  */
-fun MultiValueArgument<*>.uLongs(): Argument<List<ULong>> {
+fun Multiple<*>.uLongs(): Argument<List<ULong>> {
   return (this as Argument<List<ULong>>).apply {
     argumentListValidator = {
       map {
@@ -98,7 +98,7 @@ fun MultiValueArgument<*>.uLongs(): Argument<List<ULong>> {
  *
  * @return An Argument containing a list with retrieved [Float] values.
  */
-fun MultiValueArgument<*>.floats(): Argument<List<Float>> {
+fun Multiple<*>.floats(): Argument<List<Float>> {
   return (this as Argument<List<Float>>).apply {
     argumentListValidator = {
       map {
@@ -115,7 +115,7 @@ fun MultiValueArgument<*>.floats(): Argument<List<Float>> {
  *
  * @return An Argument containing a list with retrieved [Double] values.
  */
-fun MultiValueArgument<*>.doubles(): Argument<List<Double>> {
+fun Multiple<*>.doubles(): Argument<List<Double>> {
   return (this as Argument<List<Double>>).apply {
     argumentListValidator = {
       map {
@@ -134,26 +134,26 @@ fun MultiValueArgument<*>.doubles(): Argument<List<Double>> {
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing a list with retrieved [User] values.
  */
-fun MultiValueArgument<*>.users(searchMutualGuilds: Boolean = false): Argument<List<User>> {
+fun Multiple<*>.users(searchMutualGuilds: Boolean = false): Argument<List<User>> {
   return (this as Argument<List<User>>).apply {
     argumentListValidator = {
       map {
         if (guildOnly) {
           argumentEvent.server.get().let { server ->
-            server.getMemberById(Utils.extractDigits(it)).orElse(
-              server.getMembersByDisplayNameIgnoreCase(it).firstOrNull() ?: server.getMembersByNameIgnoreCase(it).firstOrNull() ?: server.getMembersByNameIgnoreCase(it).firstOrNull() ?: server.getMemberByDiscriminatedName(it).orElse(
+            server.getMemberById(Utils.extractDigits(it)).orElseGet {
+              server.getMembersByDisplayNameIgnoreCase(it).firstOrNull() ?: server.getMembersByNameIgnoreCase(it).firstOrNull() ?: server.getMembersByNameIgnoreCase(it).firstOrNull() ?: server.getMemberByDiscriminatedName(it).orElseGet {
                 server.getMembersByNameIgnoreCase(it).first()
-              )
-            )
+              }
+            }
           }
         } else {
           throwUnless(searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
             argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
-              server.getMemberById(Utils.extractDigits(it)).orElse(
-                server.getMembersByDisplayNameIgnoreCase(it).firstOrNull() ?: server.getMembersByNameIgnoreCase(it).firstOrNull() ?: server.getMembersByNameIgnoreCase(it).firstOrNull() ?: server.getMemberByDiscriminatedName(it).orElse(
+              server.getMemberById(Utils.extractDigits(it)).orElseGet {
+                server.getMembersByDisplayNameIgnoreCase(it).firstOrNull() ?: server.getMembersByNameIgnoreCase(it).firstOrNull() ?: server.getMembersByNameIgnoreCase(it).firstOrNull() ?: server.getMemberByDiscriminatedName(it).orElseGet {
                   server.getMembersByNameIgnoreCase(it).firstOrNull()
-                )
-              )
+                }
+              }
             }
           }
         }
@@ -170,7 +170,7 @@ fun MultiValueArgument<*>.users(searchMutualGuilds: Boolean = false): Argument<L
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing a list with retrieved [ServerChannel] values.
  */
-fun MultiValueArgument<*>.channels(searchMutualGuilds: Boolean = false): Argument<List<ServerChannel>> {
+fun Multiple<*>.channels(searchMutualGuilds: Boolean = false): Argument<List<ServerChannel>> {
   return (this as Argument<List<ServerChannel>>).apply {
     argumentListValidator = {
       map {
@@ -199,7 +199,7 @@ fun MultiValueArgument<*>.channels(searchMutualGuilds: Boolean = false): Argumen
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing a list with retrieved [ServerChannel] values.
  */
-inline fun <reified R : ServerChannel> MultiValueArgument<*>.channels(vararg types: KClass<out R>, searchMutualGuilds: Boolean = false): Argument<R> {
+inline fun <reified R : ServerChannel> Multiple<*>.channels(vararg types: KClass<out R>, searchMutualGuilds: Boolean = false): Argument<R> {
   return (this as Argument<R>).apply {
     argumentListValidator = {
       map {
@@ -234,7 +234,7 @@ inline fun <reified R : ServerChannel> MultiValueArgument<*>.channels(vararg typ
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing a list with retrieved [ServerTextChannel] values.
  */
-fun MultiValueArgument<*>.textChannels(searchMutualGuilds: Boolean = false): Argument<List<ServerTextChannel>> {
+fun Multiple<*>.textChannels(searchMutualGuilds: Boolean = false): Argument<List<ServerTextChannel>> {
   return (this as Argument<List<ServerTextChannel>>).apply {
     argumentListValidator = {
       map {
@@ -262,7 +262,7 @@ fun MultiValueArgument<*>.textChannels(searchMutualGuilds: Boolean = false): Arg
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing a list with retrieved [ServerVoiceChannel] values.
  */
-fun MultiValueArgument<*>.voiceChannels(searchMutualGuilds: Boolean = false): Argument<List<ServerVoiceChannel>> {
+fun Multiple<*>.voiceChannels(searchMutualGuilds: Boolean = false): Argument<List<ServerVoiceChannel>> {
   return (this as Argument<List<ServerVoiceChannel>>).apply {
     argumentListValidator = {
       map {
@@ -290,7 +290,7 @@ fun MultiValueArgument<*>.voiceChannels(searchMutualGuilds: Boolean = false): Ar
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing a list with retrieved [ServerThreadChannel] values.
  */
-fun MultiValueArgument<*>.threadChannels(searchMutualGuilds: Boolean = false): Argument<List<ServerThreadChannel>> {
+fun Multiple<*>.threadChannels(searchMutualGuilds: Boolean = false): Argument<List<ServerThreadChannel>> {
   return (this as Argument<List<ServerThreadChannel>>).apply {
     argumentListValidator = {
       map {
@@ -316,7 +316,7 @@ fun MultiValueArgument<*>.threadChannels(searchMutualGuilds: Boolean = false): A
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing a list with retrieved [ServerStageVoiceChannel] values.
  */
-fun MultiValueArgument<*>.stageChannels(searchMutualGuilds: Boolean = false): Argument<List<ServerStageVoiceChannel>> {
+fun Multiple<*>.stageChannels(searchMutualGuilds: Boolean = false): Argument<List<ServerStageVoiceChannel>> {
   return (this as Argument<List<ServerStageVoiceChannel>>).apply {
     argumentListValidator = {
       map {
@@ -342,7 +342,7 @@ fun MultiValueArgument<*>.stageChannels(searchMutualGuilds: Boolean = false): Ar
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing a list with retrieved [ServerForumChannel] values.
  */
-fun MultiValueArgument<*>.forumChannels(searchMutualGuilds: Boolean = false): Argument<List<ServerForumChannel>> {
+fun Multiple<*>.forumChannels(searchMutualGuilds: Boolean = false): Argument<List<ServerForumChannel>> {
   return (this as Argument<List<ServerForumChannel>>).apply {
     argumentListValidator = {
       map {
@@ -370,7 +370,7 @@ fun MultiValueArgument<*>.forumChannels(searchMutualGuilds: Boolean = false): Ar
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing a list with retrieved [ChannelCategory] values.
  */
-fun MultiValueArgument<*>.categories(searchMutualGuilds: Boolean = false): Argument<List<ChannelCategory>> {
+fun Multiple<*>.categories(searchMutualGuilds: Boolean = false): Argument<List<ChannelCategory>> {
   return (this as Argument<List<ChannelCategory>>).apply {
     argumentListValidator = {
       map {
@@ -398,7 +398,7 @@ fun MultiValueArgument<*>.categories(searchMutualGuilds: Boolean = false): Argum
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing a list with retrieved [Role] values.
  */
-fun MultiValueArgument<*>.roles(searchMutualGuilds: Boolean = false): Argument<List<Role>> {
+fun Multiple<*>.roles(searchMutualGuilds: Boolean = false): Argument<List<Role>> {
   return (this as Argument<List<Role>>).apply {
     argumentListValidator = {
       map {
@@ -427,7 +427,7 @@ fun MultiValueArgument<*>.roles(searchMutualGuilds: Boolean = false): Argument<L
  * @param includePrivateChannels Whether to include messages in the private channel between the user and the bot in search. Defaults to false.
  * @return An Argument containing a list with retrieved [Message] values.
  */
-fun MultiValueArgument<*>.messages(searchMutualGuilds: Boolean = false, includePrivateChannels: Boolean = false): Argument<List<Message>> {
+fun Multiple<*>.messages(searchMutualGuilds: Boolean = false, includePrivateChannels: Boolean = false): Argument<List<Message>> {
   return (this as Argument<List<Message>>).apply {
     argumentListValidator = {
       map {
@@ -441,14 +441,14 @@ fun MultiValueArgument<*>.messages(searchMutualGuilds: Boolean = false, includeP
               .getMessageById(matchResult.groups["message"]!!.value).get()
           } else {
             try {
-              argumentEvent.server.get().getTextChannelById(matchResult.groups["channel"]!!.value).get().takeIf { it.canSee(argumentEvent.messageAuthor.asUser().get()) }!!
+              argumentEvent.server.get().getTextChannelById(matchResult.groups["channel"]!!.value).get().takeIf { channel -> channel.canSee(argumentEvent.messageAuthor.asUser().get()) }!!
                 .getMessageById(matchResult.groups["message"]!!.value).get()
             } catch (_: NullPointerException) {
               throw IllegalAccessException()
             } catch (_: Exception) {
               throwUnless(searchMutualGuilds) {
-                argumentEvent.messageAuthor.asUser().get().mutualServers.find { it.idAsString == matchResult.groups["server"]!!.value }!!
-                  .getTextChannelById(matchResult.groups["channel"]!!.value).get().takeIf { it.canSee(argumentEvent.messageAuthor.asUser().get()) }!!
+                argumentEvent.messageAuthor.asUser().get().mutualServers.find { server -> server.idAsString == matchResult.groups["server"]!!.value }!!
+                  .getTextChannelById(matchResult.groups["channel"]!!.value).get().takeIf { channel -> channel.canSee(argumentEvent.messageAuthor.asUser().get()) }!!
                   .getMessageById(matchResult.groups["message"]!!.value).get()
               }
             }
@@ -467,7 +467,7 @@ fun MultiValueArgument<*>.messages(searchMutualGuilds: Boolean = false, includeP
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing a list with retrieved [CustomEmoji] values.
  */
-fun MultiValueArgument<*>.customEmojis(searchMutualGuilds: Boolean = false): Argument<List<CustomEmoji>> {
+fun Multiple<*>.customEmojis(searchMutualGuilds: Boolean = false): Argument<List<CustomEmoji>> {
   return (this as Argument<List<CustomEmoji>>).apply {
     argumentListValidator = {
       map {
@@ -476,8 +476,8 @@ fun MultiValueArgument<*>.customEmojis(searchMutualGuilds: Boolean = false): Arg
           argumentEvent.server.get().getCustomEmojiById(matchResult.groups["id"]!!.value).get()
         } else {
           throwUnless(searchMutualGuilds) {
-            argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf {
-              it.getCustomEmojiById(matchResult.groups["id"]!!.value).get()
+            argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+              server.getCustomEmojiById(matchResult.groups["id"]!!.value).get()
             }
           }
         }
@@ -493,7 +493,7 @@ fun MultiValueArgument<*>.customEmojis(searchMutualGuilds: Boolean = false): Arg
  *
  * @return An Argument containing a list with retrieved [Snowflake] values.
  */
-fun MultiValueArgument<*>.snowflakes(): Argument<List<Snowflake>> {
+fun Multiple<*>.snowflakes(): Argument<List<Snowflake>> {
   return (this as Argument<List<Snowflake>>).apply {
     argumentValidator = {
       map {
@@ -510,7 +510,7 @@ fun MultiValueArgument<*>.snowflakes(): Argument<List<Snowflake>> {
  *
  * @return An Argument containing a list with retrieved [URL] values.
  */
-fun MultiValueArgument<*>.urls(): Argument<List<URL>> {
+fun Multiple<*>.urls(): Argument<List<URL>> {
   return (this as Argument<List<URL>>).apply {
     argumentListValidator = {
       map {
@@ -527,7 +527,7 @@ fun MultiValueArgument<*>.urls(): Argument<List<URL>> {
  *
  * @return An Argument containing a list with retrieved [Duration] values.
  */
-fun MultiValueArgument<*>.durations(): Argument<List<Duration>> {
+fun Multiple<*>.durations(): Argument<List<Duration>> {
   return (this as Argument<List<Duration>>).apply {
     argumentListValidator = {
       map {
@@ -545,7 +545,7 @@ fun MultiValueArgument<*>.durations(): Argument<List<Duration>> {
  * @param locale The locale used for date parsing. Defaults to [Locale.ENGLISH].
  * @return An Argument containing a list with retrieved [LocalDate] values.
  */
-fun MultiValueArgument<*>.dates(locale: Locale = Locale.ENGLISH): Argument<List<LocalDate>> {
+fun Multiple<*>.dates(locale: Locale = Locale.ENGLISH): Argument<List<LocalDate>> {
   return (this as Argument<List<LocalDate>>).apply {
     argumentListValidator = {
       map {
@@ -562,7 +562,7 @@ fun MultiValueArgument<*>.dates(locale: Locale = Locale.ENGLISH): Argument<List<
  *
  * @returnAn Argument containing a list with retrieved [Color] values.
  */
-fun MultiValueArgument<*>.colors(): Argument<List<Color>> {
+fun Multiple<*>.colors(): Argument<List<Color>> {
   return (this as Argument<List<Color>>).apply {
     argumentListValidator = {
       map {
@@ -579,7 +579,7 @@ fun MultiValueArgument<*>.colors(): Argument<List<Color>> {
  *
  * @return An Argument containing a list with retrieved [Emoji] values.
  */
-fun MultiValueArgument<*>.unicodeEmojis(): Argument<List<Emoji>> {
+fun Multiple<*>.unicodeEmojis(): Argument<List<Emoji>> {
   return (this as Argument<List<Emoji>>).apply {
     argumentListValidator = {
       map {
@@ -596,16 +596,25 @@ fun MultiValueArgument<*>.unicodeEmojis(): Argument<List<Emoji>> {
  *
  * @return An Argument containing a list with retrieved enum values.
  */
-inline fun <reified T : Enum<T>> MultiValueArgument<*>.enums(): Argument<T> {
+inline fun <reified T : Enum<T>> Multiple<*>.enums(): Argument<T> {
   return (this as Argument<T>).apply {
     argumentListValidator = {
       map {
-        try {
-          enumValueOf<T>(it.uppercase().replace(" ", "_"))
-        } catch (e: IllegalArgumentException) {
-          throw IllegalArgumentException()
-        }
+        enumValueOf<T>(it.uppercase().replace(" ", "_"))
       }
+    }
+  }
+}
+
+/**
+ * Joins the argument values into one string.
+ *
+ * @return An Argument containing the combined value.
+ */
+fun <T> Multiple<List<T>>.combine(): Argument<T> {
+  return (this as Argument<T>).apply {
+    argumentListValidator = {
+      joinToString(" ")
     }
   }
 }

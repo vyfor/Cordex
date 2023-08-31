@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package me.blast.core
 
 import kotlinx.coroutines.CoroutineScope
@@ -13,7 +15,7 @@ import org.javacord.api.event.message.MessageCreateEvent
 import org.slf4j.LoggerFactory
 
 object Cordex {
-  const val VERSION = "0.1"
+  const val VERSION = "0.2.2"
   val logger = LoggerFactory.getLogger(Cordex::class.java)
   val scope = CoroutineScope(Dispatchers.Default)
 }
@@ -37,7 +39,7 @@ class CordexBuilder(token: String) {
    *
    * @param block The configuration block for [DiscordApiBuilder].
    */
-  fun config(block: DiscordApiBuilder.() -> Unit) = api.apply(block)
+  fun config(block: DiscordApiBuilder.() -> Unit) = block(api)
   
   /**
    * Add or remove bot commands.
@@ -81,7 +83,7 @@ suspend inline fun cordex(
 ): Flow<DiscordApi> = flow {
   CordexBuilder(token).run {
     block()
-    api.loginAllShards().map {
+    api.setAllIntents().setWaitForUsersOnStartup(true).loginAllShards().map {
       emit(it.await().apply {
         addListener(CordexListener(this@run))
       })

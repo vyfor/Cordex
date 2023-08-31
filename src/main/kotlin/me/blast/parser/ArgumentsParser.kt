@@ -20,9 +20,15 @@ object ArgumentsParser {
         else it.argumentType == ArgumentType.POSITIONAL
       }
       if(arg != null) {
-        if (guildOnly) arg.argumentEvent = event
-        map[arg.argumentName!!] = when (arg.argumentType) {
-          ArgumentType.FLAG -> true
+        arg.guildOnly = guildOnly
+        if (guildOnly) {
+          arg.argumentEvent = event
+        }
+       when (arg.argumentType) {
+          ArgumentType.FLAG -> {
+            map[arg.argumentName!!] = true
+            validationList.remove(arg)
+          }
           
           ArgumentType.OPTION,
           ArgumentType.POSITIONAL
@@ -39,35 +45,43 @@ object ArgumentsParser {
                   (if (arg.argumentRange.last == 0) true else i < arg.argumentRange.last) && !s.startsWith('-')
                 }
               }
+              if(arguments.isEmpty()) continue
               if(arg.argumentRange.first != 0 && arguments.size < arg.argumentRange.first) throw ArgumentException.Insufficient(arg, arguments.joinToString(" "))
               try {
-                arg.argumentValidator?.invoke(arguments.joinToString(" ")) ?: arg.argumentListValidator?.invoke(arguments) ?: arg.argumentDefaultValue ?: throw ArgumentException.Invalid(arg, arguments.joinToString(" "))
+                map[arg.argumentName!!] = arg.argumentValidator?.invoke(arguments.joinToString(" ")) ?: arg.argumentListValidator?.invoke(arguments) ?: arguments
+                validationList.remove(arg)
               } catch (e: Exception) {
                 throw ArgumentException.Invalid(arg, arguments.joinToString(" "))
               }
             } else {
-              val nextArg = if(arg.argumentType == ArgumentType.OPTION) {
+              val nextArg: String
+              if(arg.argumentType == ArgumentType.OPTION) {
                 if(!args.hasNext()) throw ArgumentException.Empty(arg)
-                args.next()
+                else nextArg = args.next()
+                if(nextArg.startsWith('-')) throw ArgumentException.Empty(arg)
               } else {
-                next
+                nextArg = next
               }
-              if (nextArg.startsWith('-')) throw ArgumentException.Empty(arg)
               try {
-                arg.argumentValidator?.invoke(nextArg) ?: arg.argumentDefaultValue ?: throw ArgumentException.Invalid(arg, nextArg)
+                map[arg.argumentName!!] = arg.argumentValidator?.invoke(nextArg) ?: nextArg
+                validationList.remove(arg)
               } catch (e: Exception) {
                 throw ArgumentException.Invalid(arg, nextArg)
               }
             }
           }
         }
-        validationList.remove(arg)
       }
     }
-    val missingArgs = validationList.filter { if (it.argumentType == ArgumentType.FLAG) false else !it.argumentIsOptional }
-    if (missingArgs.isNotEmpty()) {
-      throw ArgumentException.Missing(missingArgs)
+    val missingArgs = validationList.filter {
+      if (it.argumentDefaultValue != null) {
+        map[it.argumentName!!] = it.argumentDefaultValue!!
+        false
+      } else {
+        !it.argumentIsOptional
+      }
     }
+    if(missingArgs.isNotEmpty()) throw ArgumentException.Missing(missingArgs)
     
     return map
   }

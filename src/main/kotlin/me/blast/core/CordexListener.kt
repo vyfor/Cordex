@@ -24,7 +24,7 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
   private fun executeCommand(event: MessageCreateEvent, prefix: String) {
     val args = event.messageContent.substring(prefix.length).split(Regex("\\s+"))
     cordex.handler.getCommands()[args[0].lowercase()]?.apply {
-      if(guildOnly && !event.server.hasValue()) return
+      if (guildOnly && !event.server.hasValue()) return@apply
       try {
         val parsedArgs = ArgumentsParser.parse(args.drop(1), options, event, guildOnly)
         Cordex.scope.launch {
