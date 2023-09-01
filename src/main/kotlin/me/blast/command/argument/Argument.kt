@@ -211,10 +211,10 @@ fun <T> InitialArg<T>.multiple(range: IntRange = 1..0): MultipleArg<List<T>> {
  *
  * End value set to `0` lets the argument accept unlimited amount of values.
  * @param validator A function that validates and processes the list of argument values.
- * @return An [Argument] with multiple values.
+ * @return An [Argument] with multiple values and custom validation.
  */
-fun <T, R : Any> InitialArg<T>.multiple(range: IntRange = 1..0, validator: List<String>.() -> R): MultipleArg<List<R>> {
-  return MultipleArg<List<R>>(this, options).apply {
+fun <T, R : Any> InitialArg<T>.multiple(range: IntRange = 1..0, validator: List<String>.() -> R): MultipleArg<R> {
+  return MultipleArg<R>(this, options).apply {
     argumentRange = range
     argumentListValidator = validator
   }
@@ -245,10 +245,10 @@ fun <T> OptionalArg<T?>.multiple(range: IntRange = 1..0): FinalizedArg<List<T>> 
  *
  * End value set to `0` lets the argument accept unlimited amount of values.
  * @param validator A function that validates and processes the list of argument values.
- * @return An optional [Argument] with multiple values.
+ * @return An optional [Argument] with multiple and custom validation.
  */
-fun <T, R : Any> OptionalArg<T?>.multiple(range: IntRange = 1..0, validator: List<String>.() -> R): FinalizedArg<List<R>> {
-  return FinalizedArg<List<R>>(this, options).apply {
+fun <T, R : Any> OptionalArg<T?>.multiple(range: IntRange = 1..0, validator: List<String>.() -> R): FinalizedArg<R> {
+  return FinalizedArg<R>(this, options).apply {
     argumentRange = range
     argumentListValidator = validator
   }
@@ -279,10 +279,10 @@ fun <T> DefaultArg<T>.multiple(range: IntRange = 1..0): MultipleArg<List<T>> {
  *
  * End value set to `0` lets the argument accept unlimited amount of values.
  * @param validator A function that validates and processes the list of argument values.
- * @return An optional [Argument] with a default value that accepts multiple values.
+ * @return An optional [Argument] with a default value that accepts multiple values and custom validation.
  */
-fun <T, R : Any> DefaultArg<T>.multiple(range: IntRange = 1..0, validator: List<String>.() -> R): MultipleArg<List<R>> {
-  return MultipleArg<List<R>>(this, options).apply {
+fun <T, R : Any> DefaultArg<T>.multiple(range: IntRange = 1..0, validator: List<String>.() -> R): MultipleArg<R> {
+  return MultipleArg<R>(this, options).apply {
     argumentRange = range
     argumentListValidator = validator
   }
