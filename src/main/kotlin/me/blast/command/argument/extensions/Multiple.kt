@@ -21,6 +21,7 @@ import java.net.URL
 import java.time.Duration
 import java.time.LocalDate
 import java.util.*
+import kotlin.jvm.optionals.getOrElse
 import kotlin.reflect.KClass
 
 /**
@@ -140,8 +141,8 @@ fun Multiple<*>.users(searchMutualGuilds: Boolean = false): Argument<List<User>>
       map {
         if (guildOnly) {
           argumentEvent.server.get().let { server ->
-            server.getMemberById(Utils.extractDigits(it)).orElseGet {
-              server.getMembersByDisplayNameIgnoreCase(it).firstOrNull() ?: server.getMembersByNameIgnoreCase(it).firstOrNull() ?: server.getMembersByNameIgnoreCase(it).firstOrNull() ?: server.getMemberByDiscriminatedName(it).orElseGet {
+            server.getMemberById(Utils.extractDigits(it)).getOrElse {
+              server.getMembersByDisplayNameIgnoreCase(it).firstOrNull() ?: server.getMembersByNameIgnoreCase(it).firstOrNull() ?: server.getMembersByNameIgnoreCase(it).firstOrNull() ?: server.getMemberByDiscriminatedName(it).getOrElse {
                 server.getMembersByNameIgnoreCase(it).first()
               }
             }
@@ -149,8 +150,8 @@ fun Multiple<*>.users(searchMutualGuilds: Boolean = false): Argument<List<User>>
         } else {
           throwUnless(searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
             argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
-              server.getMemberById(Utils.extractDigits(it)).orElseGet {
-                server.getMembersByDisplayNameIgnoreCase(it).firstOrNull() ?: server.getMembersByNameIgnoreCase(it).firstOrNull() ?: server.getMembersByNameIgnoreCase(it).firstOrNull() ?: server.getMemberByDiscriminatedName(it).orElseGet {
+              server.getMemberById(Utils.extractDigits(it)).getOrElse {
+                server.getMembersByDisplayNameIgnoreCase(it).firstOrNull() ?: server.getMembersByNameIgnoreCase(it).firstOrNull() ?: server.getMembersByNameIgnoreCase(it).firstOrNull() ?: server.getMemberByDiscriminatedName(it).getOrElse {
                   server.getMembersByNameIgnoreCase(it).firstOrNull()
                 }
               }

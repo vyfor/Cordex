@@ -3,7 +3,7 @@
 package me.blast.command.argument.extensions
 
 import me.blast.command.argument.Argument
-import me.blast.command.argument.Base
+import me.blast.command.argument.NonNull
 import me.blast.utils.Snowflake
 import me.blast.utils.Utils
 import me.blast.utils.Utils.hasValue
@@ -21,6 +21,7 @@ import java.net.URL
 import java.time.Duration
 import java.time.LocalDate
 import java.util.*
+import kotlin.jvm.optionals.getOrElse
 import kotlin.reflect.KClass
 
 /**
@@ -30,7 +31,7 @@ import kotlin.reflect.KClass
  *
  * @return An Argument containing the retrieved [Int] value.
  */
-fun Base<*>.int(): Argument<Int> {
+fun NonNull<*>.int(): Argument<Int> {
   return (this as Argument<Int>).apply {
     argumentValidator = {
       toInt()
@@ -45,7 +46,7 @@ fun Base<*>.int(): Argument<Int> {
  *
  * @return An Argument containing the retrieved [UInt] value.
  */
-fun Base<*>.uInt(): Argument<UInt> {
+fun NonNull<*>.uInt(): Argument<UInt> {
   return (this as Argument<UInt>).apply {
     argumentValidator = {
       toUInt()
@@ -60,7 +61,7 @@ fun Base<*>.uInt(): Argument<UInt> {
  *
  * @return An Argument containing the retrieved [Long] value.
  */
-fun Base<*>.long(): Argument<Long> {
+fun NonNull<*>.long(): Argument<Long> {
   return (this as Argument<Long>).apply {
     argumentValidator = { toLong() }
   }
@@ -73,7 +74,7 @@ fun Base<*>.long(): Argument<Long> {
  *
  * @return An Argument containing the retrieved [ULong] value.
  */
-fun Base<*>.uLong(): Argument<ULong> {
+fun NonNull<*>.uLong(): Argument<ULong> {
   return (this as Argument<ULong>).apply {
     argumentValidator = { toULong() }
   }
@@ -86,7 +87,7 @@ fun Base<*>.uLong(): Argument<ULong> {
  *
  * @return An Argument containing the retrieved [Float] value.
  */
-fun Base<*>.float(): Argument<Float> {
+fun NonNull<*>.float(): Argument<Float> {
   return (this as Argument<Float>).apply {
     argumentValidator = { toFloat() }
   }
@@ -99,7 +100,7 @@ fun Base<*>.float(): Argument<Float> {
  *
  * @return An Argument containing the retrieved [Double] value.
  */
-fun Base<*>.double(): Argument<Double> {
+fun NonNull<*>.double(): Argument<Double> {
   return (this as Argument<Double>).apply {
     argumentValidator = { toDouble() }
   }
@@ -113,24 +114,24 @@ fun Base<*>.double(): Argument<Double> {
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved [User] value.
  */
-fun Base<*>.user(searchMutualGuilds: Boolean = false): Argument<User> {
+fun NonNull<*>.user(searchMutualGuilds: Boolean = false): Argument<User> {
   return (this as Argument<User>).apply {
     argumentValidator = {
       if (guildOnly) {
         argumentEvent.server.get().let { server ->
           server.getMemberById(Utils.extractDigits(this))
-            .orElseGet {
+            .getOrElse {
               server.getMembersByDisplayNameIgnoreCase(this).firstOrNull() ?:
               server.getMembersByNameIgnoreCase(this).firstOrNull() ?:
               server.getMemberByDiscriminatedName(this)
-                .orElseGet { server.getMembersByNameIgnoreCase(this).first() }
+                .getOrElse { server.getMembersByNameIgnoreCase(this).first() }
             }
         }
       } else {
         throwUnless(searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
           argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
-            server.getMemberById(Utils.extractDigits(this)).orElseGet {
-              server.getMembersByDisplayNameIgnoreCase(this).firstOrNull() ?: server.getMembersByNameIgnoreCase(this).firstOrNull() ?: server.getMembersByNameIgnoreCase(this).firstOrNull() ?: server.getMemberByDiscriminatedName(this).orElseGet {
+            server.getMemberById(Utils.extractDigits(this)).getOrElse {
+              server.getMembersByDisplayNameIgnoreCase(this).firstOrNull() ?: server.getMembersByNameIgnoreCase(this).firstOrNull() ?: server.getMembersByNameIgnoreCase(this).firstOrNull() ?: server.getMemberByDiscriminatedName(this).getOrElse {
                 server.getMembersByNameIgnoreCase(this).firstOrNull()
               }
             }
@@ -149,7 +150,7 @@ fun Base<*>.user(searchMutualGuilds: Boolean = false): Argument<User> {
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved [ServerChannel] value.
  */
-fun Base<*>.channel(searchMutualGuilds: Boolean = false): Argument<ServerChannel> {
+fun NonNull<*>.channel(searchMutualGuilds: Boolean = false): Argument<ServerChannel> {
   return (this as Argument<ServerChannel>).apply {
     argumentValidator = {
       if (guildOnly) {
@@ -176,7 +177,7 @@ fun Base<*>.channel(searchMutualGuilds: Boolean = false): Argument<ServerChannel
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved [ServerChannel] value.
  */
-inline fun <reified R : ServerChannel> Base<*>.channel(vararg types: KClass<out R>, searchMutualGuilds: Boolean = false): Argument<R> {
+inline fun <reified R : ServerChannel> NonNull<*>.channel(vararg types: KClass<out R>, searchMutualGuilds: Boolean = false): Argument<R> {
   return (this as Argument<R>).apply {
     argumentValidator = {
       val channel = if (guildOnly) {
@@ -209,7 +210,7 @@ inline fun <reified R : ServerChannel> Base<*>.channel(vararg types: KClass<out 
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved [ServerTextChannel] value.
  */
-fun Base<*>.textChannel(searchMutualGuilds: Boolean = false): Argument<ServerTextChannel?> {
+fun NonNull<*>.textChannel(searchMutualGuilds: Boolean = false): Argument<ServerTextChannel?> {
   return (this as Argument<ServerTextChannel?>).apply {
     argumentValidator = {
       if (guildOnly) {
@@ -235,7 +236,7 @@ fun Base<*>.textChannel(searchMutualGuilds: Boolean = false): Argument<ServerTex
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved [ServerVoiceChannel] value.
  */
-fun Base<*>.voiceChannel(searchMutualGuilds: Boolean = false): Argument<ServerVoiceChannel?> {
+fun NonNull<*>.voiceChannel(searchMutualGuilds: Boolean = false): Argument<ServerVoiceChannel?> {
   return (this as Argument<ServerVoiceChannel?>).apply {
     argumentValidator = {
       if (guildOnly) {
@@ -261,7 +262,7 @@ fun Base<*>.voiceChannel(searchMutualGuilds: Boolean = false): Argument<ServerVo
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved [ServerThreadChannel] value.
  */
-fun Base<*>.threadChannel(searchMutualGuilds: Boolean = false): Argument<ServerThreadChannel?> {
+fun NonNull<*>.threadChannel(searchMutualGuilds: Boolean = false): Argument<ServerThreadChannel?> {
   return (this as Argument<ServerThreadChannel?>).apply {
     argumentValidator = {
       if (guildOnly) {
@@ -285,7 +286,7 @@ fun Base<*>.threadChannel(searchMutualGuilds: Boolean = false): Argument<ServerT
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved [ServerStageVoiceChannel] value.
  */
-fun Base<*>.stageChannel(searchMutualGuilds: Boolean = false): Argument<ServerStageVoiceChannel?> {
+fun NonNull<*>.stageChannel(searchMutualGuilds: Boolean = false): Argument<ServerStageVoiceChannel?> {
   return (this as Argument<ServerStageVoiceChannel?>).apply {
     argumentValidator = {
       if (guildOnly) {
@@ -309,7 +310,7 @@ fun Base<*>.stageChannel(searchMutualGuilds: Boolean = false): Argument<ServerSt
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved [ServerForumChannel] value.
  */
-fun Base<*>.forumChannel(searchMutualGuilds: Boolean = false): Argument<ServerForumChannel?> {
+fun NonNull<*>.forumChannel(searchMutualGuilds: Boolean = false): Argument<ServerForumChannel?> {
   return (this as Argument<ServerForumChannel?>).apply {
     argumentValidator = {
       if (guildOnly) {
@@ -335,7 +336,7 @@ fun Base<*>.forumChannel(searchMutualGuilds: Boolean = false): Argument<ServerFo
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved [ChannelCategory] value.
  */
-fun Base<*>.category(searchMutualGuilds: Boolean = false): Argument<ChannelCategory> {
+fun NonNull<*>.category(searchMutualGuilds: Boolean = false): Argument<ChannelCategory> {
   return (this as Argument<ChannelCategory>).apply {
     argumentValidator = {
       if (guildOnly) {
@@ -361,7 +362,7 @@ fun Base<*>.category(searchMutualGuilds: Boolean = false): Argument<ChannelCateg
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved [Role] value.
  */
-fun Base<*>.role(searchMutualGuilds: Boolean = false): Argument<Role> {
+fun NonNull<*>.role(searchMutualGuilds: Boolean = false): Argument<Role> {
   return (this as Argument<Role>).apply {
     argumentValidator = {
       if (guildOnly) {
@@ -388,7 +389,7 @@ fun Base<*>.role(searchMutualGuilds: Boolean = false): Argument<Role> {
  * @param includePrivateChannels Whether to include messages in the private channel between the user and the bot in search. Defaults to false.
  * @return An Argument containing the retrieved [Message] value.
  */
-fun Base<*>.message(searchMutualGuilds: Boolean = false, includePrivateChannels: Boolean = false): Argument<Message> {
+fun NonNull<*>.message(searchMutualGuilds: Boolean = false, includePrivateChannels: Boolean = false): Argument<Message> {
   return (this as Argument<Message>).apply {
     argumentValidator = {
       val matchResult = DiscordRegexPattern.MESSAGE_LINK.toRegex().matchEntire(this)
@@ -426,7 +427,7 @@ fun Base<*>.message(searchMutualGuilds: Boolean = false, includePrivateChannels:
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved [CustomEmoji] value.
  */
-fun Base<*>.customEmoji(searchMutualGuilds: Boolean = false): Argument<CustomEmoji> {
+fun NonNull<*>.customEmoji(searchMutualGuilds: Boolean = false): Argument<CustomEmoji> {
   return (this as Argument<CustomEmoji>).apply {
     argumentValidator = {
       val matchResult = DiscordRegexPattern.CUSTOM_EMOJI.toRegex().matchEntire(this) ?: throw IllegalArgumentException()
@@ -450,7 +451,7 @@ fun Base<*>.customEmoji(searchMutualGuilds: Boolean = false): Argument<CustomEmo
  *
  * @return An Argument containing the retrieved [Snowflake] value.
  */
-fun Base<*>.snowflake(): Argument<Snowflake> {
+fun NonNull<*>.snowflake(): Argument<Snowflake> {
   return (this as Argument<Snowflake>).apply {
     argumentValidator = {
       Snowflake(toLong().takeIf { it > 0 }!!)
@@ -465,7 +466,7 @@ fun Base<*>.snowflake(): Argument<Snowflake> {
  *
  * @return An Argument containing the retrieved [URL] value.
  */
-fun Base<*>.url(): Argument<URL> {
+fun NonNull<*>.url(): Argument<URL> {
   return (this as Argument<URL>).apply {
     argumentValidator = { URL(this) }
   }
@@ -478,7 +479,7 @@ fun Base<*>.url(): Argument<URL> {
  *
  * @return An Argument containing the retrieved [Duration] value.
  */
-fun Base<*>.duration(): Argument<Duration> {
+fun NonNull<*>.duration(): Argument<Duration> {
   return (this as Argument<Duration>).apply {
     argumentValidator = {
       Utils.parseDuration(this) ?: throw IllegalArgumentException()
@@ -494,7 +495,7 @@ fun Base<*>.duration(): Argument<Duration> {
  * @param locale The locale used for date parsing. Defaults to [Locale.ENGLISH].
  * @return An Argument containing the retrieved [LocalDate] value.
  */
-fun Base<*>.date(locale: Locale = Locale.ENGLISH): Argument<LocalDate> {
+fun NonNull<*>.date(locale: Locale = Locale.ENGLISH): Argument<LocalDate> {
   return (this as Argument<LocalDate>).apply {
     argumentValidator = {
       Utils.parseDate(this, locale) ?: throw IllegalArgumentException()
@@ -509,7 +510,7 @@ fun Base<*>.date(locale: Locale = Locale.ENGLISH): Argument<LocalDate> {
  *
  * @return An Argument containing the retrieved [Color] value.
  */
-fun Base<*>.color(): Argument<Color> {
+fun NonNull<*>.color(): Argument<Color> {
   return (this as Argument<Color>).apply {
     argumentValidator = {
       Color::class.java.getField(this)[null] as? Color ?: Color.decode(this)
@@ -524,7 +525,7 @@ fun Base<*>.color(): Argument<Color> {
  *
  * @return An Argument containing the retrieved [Emoji] value.
  */
-fun Base<*>.unicodeEmoji(): Argument<Emoji> {
+fun NonNull<*>.unicodeEmoji(): Argument<Emoji> {
   return (this as Argument<Emoji>).apply {
     argumentValidator = {
       EmojiManager.getEmoji(this).get()
@@ -539,7 +540,7 @@ fun Base<*>.unicodeEmoji(): Argument<Emoji> {
  *
  * @return An Argument containing the retrieved enum value.
  */
-inline fun <reified T : Enum<T>> Base<*>.enum(): Argument<T> {
+inline fun <reified T : Enum<T>> NonNull<*>.enum(): Argument<T> {
   return (this as Argument<T>).apply {
     argumentValidator = {
       enumValueOf<T>(uppercase().replace(" ", "_"))

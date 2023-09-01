@@ -70,15 +70,17 @@ interface Base<T>
 
 interface Multiple<T>
 
-open class InitialArg<T>(options: ArrayList<Argument<*>>): Argument<T>(options = options), Base<T>
+interface NonNull<T> : Base<T>
+
+open class InitialArg<T>(options: ArrayList<Argument<*>>) : Argument<T>(options = options), NonNull<T>
 
 open class OptionalArg<T>(copyFrom: Argument<*>?, options: ArrayList<Argument<*>>): Argument<T>(copyFrom, options = options), Base<T>
 
-open class MultipleArg<T>(copyFrom: Argument<*>?, options: ArrayList<Argument<*>>): Argument<T>(copyFrom, options = options), Multiple<T>, Base<T>
+open class MultipleArg<T>(copyFrom: Argument<*>?, options: ArrayList<Argument<*>>) : Argument<T>(copyFrom, options = options), Multiple<T>, NonNull<T>
 
-open class DefaultArg<T>(copyFrom: Argument<*>?, options: ArrayList<Argument<*>>): Argument<T>(copyFrom, options = options), Base<T>
+open class DefaultArg<T>(copyFrom: Argument<*>?, options: ArrayList<Argument<*>>) : Argument<T>(copyFrom, options = options), NonNull<T>
 
-open class FinalizedArg<T>(copyFrom: Argument<*>?, options: ArrayList<Argument<*>>): Argument<T>(copyFrom, options = options), Multiple<T>, Base<T>
+open class FinalizedArg<T>(copyFrom: Argument<*>?, options: ArrayList<Argument<*>>) : Argument<T>(copyFrom, options = options), Multiple<T>, NonNull<T>
 
 /**
  * Converts an argument into an optional argument, enabling nullable values.

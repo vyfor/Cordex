@@ -21,6 +21,7 @@ import java.net.URL
 import java.time.Duration
 import java.time.LocalDate
 import java.util.*
+import kotlin.jvm.optionals.getOrElse
 import kotlin.reflect.KClass
 
 /**
@@ -114,8 +115,8 @@ fun OptionalArg<*>.user(searchMutualGuilds: Boolean = false): Argument<User?> {
     argumentValidator = {
       if (guildOnly) {
         argumentEvent.server.get().let { server ->
-          server.getMemberById(Utils.extractDigits(this)).orElseGet {
-            server.getMembersByDisplayNameIgnoreCase(this).firstOrNull() ?: server.getMembersByNameIgnoreCase(this).firstOrNull() ?: server.getMembersByNameIgnoreCase(this).firstOrNull() ?: server.getMemberByDiscriminatedName(this).orElseGet {
+          server.getMemberById(Utils.extractDigits(this)).getOrElse {
+            server.getMembersByDisplayNameIgnoreCase(this).firstOrNull() ?: server.getMembersByNameIgnoreCase(this).firstOrNull() ?: server.getMembersByNameIgnoreCase(this).firstOrNull() ?: server.getMemberByDiscriminatedName(this).getOrElse {
               server.getMembersByNameIgnoreCase(this).first()
             }
           }
@@ -123,8 +124,8 @@ fun OptionalArg<*>.user(searchMutualGuilds: Boolean = false): Argument<User?> {
       } else {
         throwUnless(searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
           argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
-            server.getMemberById(Utils.extractDigits(this)).orElseGet {
-              server.getMembersByDisplayNameIgnoreCase(this).firstOrNull() ?: server.getMembersByNameIgnoreCase(this).firstOrNull() ?: server.getMembersByNameIgnoreCase(this).firstOrNull() ?: server.getMemberByDiscriminatedName(this).orElseGet {
+            server.getMemberById(Utils.extractDigits(this)).getOrElse {
+              server.getMembersByDisplayNameIgnoreCase(this).firstOrNull() ?: server.getMembersByNameIgnoreCase(this).firstOrNull() ?: server.getMembersByNameIgnoreCase(this).firstOrNull() ?: server.getMemberByDiscriminatedName(this).getOrElse {
                 server.getMembersByNameIgnoreCase(this).firstOrNull()
               }
             }
