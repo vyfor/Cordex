@@ -24,17 +24,16 @@ object ArgumentsParser {
         if (guildOnly) {
           arg.argumentEvent = event
         }
-       when (arg.argumentType) {
+        when (arg.argumentType) {
           ArgumentType.FLAG -> {
             map[arg.argumentName!!] = true
             validationList.remove(arg)
           }
-          
           ArgumentType.OPTION,
-          ArgumentType.POSITIONAL
+          ArgumentType.POSITIONAL,
           -> {
-            if(arg.argumentRange.first != 1 || arg.argumentRange.last != 1) {
-              val arguments = if(arg.argumentType == ArgumentType.OPTION) {
+            if (arg.argumentRange.first != 1 || arg.argumentRange.last != 1) {
+              val arguments = if (next.startsWith('-')) {
                 args.takeWhileWithIndex { i, s ->
                   if (i == 0 && s.startsWith('-')) throw ArgumentException.Empty(arg)
                   (if (arg.argumentRange.last == 0) true else i < arg.argumentRange.last) && !s.startsWith('-')
@@ -45,8 +44,8 @@ object ArgumentsParser {
                   (if (arg.argumentRange.last == 0) true else i < arg.argumentRange.last) && !s.startsWith('-')
                 }
               }
-              if(arguments.isEmpty()) continue
-              if(arg.argumentRange.first != 0 && arguments.size < arg.argumentRange.first) throw ArgumentException.Insufficient(arg, arguments.joinToString(" "))
+              if (arguments.isEmpty()) continue
+              if (arg.argumentRange.first != 0 && arguments.size < arg.argumentRange.first) throw ArgumentException.Insufficient(arg, arguments.joinToString(" "))
               try {
                 map[arg.argumentName!!] = arg.argumentValidator?.invoke(arguments.joinToString(" ")) ?: arg.argumentListValidator?.invoke(arguments) ?: arguments
                 validationList.remove(arg)
@@ -55,10 +54,10 @@ object ArgumentsParser {
               }
             } else {
               val nextArg: String
-              if(arg.argumentType == ArgumentType.OPTION) {
-                if(!args.hasNext()) throw ArgumentException.Empty(arg)
+              if (arg.argumentType == ArgumentType.OPTION) {
+                if (!args.hasNext()) throw ArgumentException.Empty(arg)
                 else nextArg = args.next()
-                if(nextArg.startsWith('-')) throw ArgumentException.Empty(arg)
+                if (nextArg.startsWith('-')) throw ArgumentException.Empty(arg)
               } else {
                 nextArg = next
               }
