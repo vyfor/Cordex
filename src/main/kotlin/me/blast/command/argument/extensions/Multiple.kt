@@ -612,10 +612,10 @@ inline fun <reified T : Enum<T>> Multiple<*>.enums(): Argument<T> {
  *
  * @return An Argument containing the combined value.
  */
-fun <T> Multiple<List<T>>.combine(): Argument<T> {
-  return (this as Argument<T>).apply {
+fun <T> Multiple<List<T>>.combine(separator: String = " "): Argument<String> {
+  return (this as Argument<String>).apply {
     argumentListValidator = {
-      joinToString(" ")
+      joinToString(separator)
     }
   }
 }
