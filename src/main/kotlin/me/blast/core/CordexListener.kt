@@ -5,12 +5,10 @@ import me.blast.command.Arguments
 import me.blast.command.Context
 import me.blast.parser.ArgumentsParser
 import me.blast.parser.exception.ArgumentException
-import me.blast.utils.Utils.generateArgumentError
+import me.blast.utils.Embeds
 import me.blast.utils.Utils.hasValue
-import org.javacord.api.entity.message.embed.EmbedBuilder
 import org.javacord.api.event.message.MessageCreateEvent
 import org.javacord.api.listener.message.MessageCreateListener
-import java.awt.Color
 
 class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener {
   override fun onMessageCreate(event: MessageCreateEvent) {
@@ -25,7 +23,26 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
     val args = event.messageContent.substring(prefix.length).split(Regex("\\s+"))
     cordex.handler.getCommands()[args[0].lowercase()]?.apply {
       if (guildOnly && !event.server.hasValue()) return@apply
+      
       try {
+        // Check for the user's permissions in the server.
+        if (
+          permissions != null &&
+          !(
+            event.server.get().isAdmin(event.messageAuthor.asUser().get()) ||
+            event.server.get().getAllowedPermissions(event.messageAuthor.asUser().get()).containsAll(permissions)
+            )
+          ) event.message.reply(Embeds.missingPermissions(permissions))
+        
+        // Check for the bot's permissions in the server.
+        if (
+          selfPermissions != null &&
+          !(
+            event.server.get().isAdmin(event.api.yourself) ||
+            event.server.get().getAllowedPermissions(event.api.yourself).containsAll(selfPermissions)
+           )
+        ) event.message.reply(Embeds.missingSelfPermissions(selfPermissions))
+        
         val parsedArgs = ArgumentsParser.parse(args.drop(1), options, event, guildOnly)
         Cordex.scope.launch {
           execute(
@@ -41,20 +58,8 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
           )
         }
       } catch (e: ArgumentException) {
-        cordex.config.parsingErrorHandler?.invoke(event, this, e) ?: event.message.reply(
-          EmbedBuilder().apply {
-            setTitle(
-              when (e) {
-                is ArgumentException.Invalid -> "Invalid value provided for argument '${e.argument.argumentName}'"
-                is ArgumentException.Empty -> "No value provided for argument '${e.argument.argumentName}'"
-                is ArgumentException.Insufficient -> "Insufficient amount of values provided for argument '${e.argument.argumentName}'"
-                is ArgumentException.Missing -> "Missing required arguments: ${e.arguments.joinToString(prefix = "'", separator = "', '", postfix = "'") { it.argumentName!! }}"
-              }
-            )
-            setDescription("```ansi\n${generateArgumentError(e)}\n```")
-            setColor(Color.RED)
-          }
-        )
+        cordex.config.parsingErrorHandler?.invoke(event, this, e)
+          ?: event.message.reply(Embeds.invalidArguments(e))
       } catch (e: Exception) {
         cordex.config.errorHandler?.invoke(event, this@apply, e)
         Cordex.logger.error("Error occurred while executing command $name", e)
