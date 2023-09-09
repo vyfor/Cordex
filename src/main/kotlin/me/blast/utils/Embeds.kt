@@ -16,7 +16,7 @@ object Embeds {
         is ArgumentException.Missing -> "Missing required arguments: ${e.arguments.joinToString(prefix = "'", separator = "', '", postfix = "'") { it.argumentName!! }}"
       }
     )
-    setDescription("${if(e.message != null) "> ${e.message}\n" else ""}```ansi\n${generateArgumentError(e)}\n```")
+    setDescription("${if (e.message != null) "> ${e.message}\n" else ""}```ansi\n${generateArgumentError(e)}\n```")
     setColor(Color.RED)
   }
   

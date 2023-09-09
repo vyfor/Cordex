@@ -47,10 +47,10 @@ sealed class Argument<T>(copyFrom: Argument<*>? = null, val options: ArrayList<A
   operator fun provideDelegate(thisRef: Any?, property: KProperty<*>): Argument<T> {
     if (argumentName == null) argumentName = Utils.convertCamelToKebab(property.name)
     else require(argumentName!!.isNotBlank())
-    if(argumentType != ArgumentType.POSITIONAL) {
+    if (argumentType != ArgumentType.POSITIONAL) {
       if (argumentShortName == null) argumentShortName = property.name.substring(0, 1)
       else require(argumentShortName!!.isNotBlank())
-      if(argumentType == ArgumentType.FLAG) {
+      if (argumentType == ArgumentType.FLAG) {
         argumentIsOptional = true
         argumentDefaultValue = false
       }
@@ -71,7 +71,7 @@ interface NonNull<T> : Base<T>
 
 open class InitialArg<T>(options: ArrayList<Argument<*>>) : Argument<T>(options = options), NonNull<T>
 
-open class OptionalArg<T>(copyFrom: Argument<*>?, options: ArrayList<Argument<*>>): Argument<T>(copyFrom, options = options), Base<T>
+open class OptionalArg<T>(copyFrom: Argument<*>?, options: ArrayList<Argument<*>>) : Argument<T>(copyFrom, options = options), Base<T>
 
 open class MultipleArg<T>(copyFrom: Argument<*>?, options: ArrayList<Argument<*>>) : Argument<T>(copyFrom, options = options), Multiple<T>, NonNull<T>
 

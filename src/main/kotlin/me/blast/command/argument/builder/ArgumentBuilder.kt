@@ -2,7 +2,8 @@
 
 package me.blast.command.argument.builder
 
-import me.blast.command.argument.*
+import me.blast.command.argument.Argument
+import me.blast.command.argument.InitialArg
 
 abstract class ArgumentBuilder(open val guildOnly: Boolean) {
   val options = ArrayList<Argument<*>>()

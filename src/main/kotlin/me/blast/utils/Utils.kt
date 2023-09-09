@@ -12,7 +12,6 @@ import org.javacord.api.entity.message.embed.EmbedBuilder
 import java.awt.Color
 import java.io.File
 import java.time.Duration
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.ResolverStyle
@@ -137,30 +136,35 @@ object Utils {
           "\u001B[0;30m[\u001B[0;31m${if (option.argumentIsOptional || option.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m--\u001B[1;31m${option.argumentName}${if (option.argumentShortName != null) "\u001B[0;30m, -\u001B[1;31m${option.argumentShortName}" else ""}:\n     \u001B[0;33m${option.argumentDescription}"
         }
       }
-      "${if(errorMessage != null) "> ${errorMessage}\n" else ""}```ansi\n${if (formattedArgs.isEmpty()) {
-        formattedOptions
-      } else if (formattedOptions.isEmpty()) {
-        formattedArgs
-      } else {
-        "\u001B[1;37mPositional Arguments\n$formattedArgs\n\n\u001B[1;37mOptions\n$formattedOptions"
-      }}```"
+      "${if (errorMessage != null) "> ${errorMessage}\n" else ""}```ansi\n${
+        if (formattedArgs.isEmpty()) {
+          formattedOptions
+        } else if (formattedOptions.isEmpty()) {
+          formattedArgs
+        } else {
+          "\u001B[1;37mPositional Arguments\n$formattedArgs\n\n\u001B[1;37mOptions\n$formattedOptions"
+        }
+      }```"
     }
   }
   
   fun generateArgumentError(exception: ArgumentException): String {
     return when (exception) {
       is ArgumentException.Empty -> {
-        if(exception.argument.argumentType == ArgumentType.POSITIONAL) "Positional Arguments:\n\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (exception.argument.argumentIsOptional || exception.argument.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m<\u001B[1;31m${exception.argument.argumentName}\u001B[0;30m>:\n     \u001B[0;33m${exception.argument.argumentDescription}"
+        if (exception.argument.argumentType == ArgumentType.POSITIONAL) "Positional Arguments:\n\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (exception.argument.argumentIsOptional || exception.argument.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m<\u001B[1;31m${exception.argument.argumentName}\u001B[0;30m>:\n     \u001B[0;33m${exception.argument.argumentDescription}"
         else "Options:\n\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (exception.argument.argumentIsOptional || exception.argument.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m--\u001B[1;31m${exception.argument.argumentName}${if (exception.argument.argumentShortName != null) "\u001B[0;30m, -\u001B[1;31m${exception.argument.argumentShortName}" else ""}:\n     \u001B[0;33m${exception.argument.argumentDescription}"
       }
+      
       is ArgumentException.Insufficient -> {
-        if(exception.argument.argumentType == ArgumentType.POSITIONAL) "Positional Arguments:\n\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (exception.argument.argumentIsOptional || exception.argument.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m<\u001B[1;31m${exception.argument.argumentName}\u001B[0;30m>:\n     \u001B[0;33m${exception.argument.argumentDescription}"
+        if (exception.argument.argumentType == ArgumentType.POSITIONAL) "Positional Arguments:\n\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (exception.argument.argumentIsOptional || exception.argument.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m<\u001B[1;31m${exception.argument.argumentName}\u001B[0;30m>:\n     \u001B[0;33m${exception.argument.argumentDescription}"
         else "Options:\n\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (exception.argument.argumentIsOptional || exception.argument.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m--\u001B[1;31m${exception.argument.argumentName}${if (exception.argument.argumentShortName != null) "\u001B[0;30m, -\u001B[1;31m${exception.argument.argumentShortName}" else ""}:\n     \u001B[0;33m${exception.argument.argumentDescription}"
       }
+      
       is ArgumentException.Invalid -> {
-        if(exception.argument.argumentType == ArgumentType.POSITIONAL) "Positional Arguments:\n\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (exception.argument.argumentIsOptional || exception.argument.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m<\u001B[1;31m${exception.argument.argumentName}\u001B[0;30m>:\n     \u001B[0;33m${exception.argument.argumentDescription}"
+        if (exception.argument.argumentType == ArgumentType.POSITIONAL) "Positional Arguments:\n\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (exception.argument.argumentIsOptional || exception.argument.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m<\u001B[1;31m${exception.argument.argumentName}\u001B[0;30m>:\n     \u001B[0;33m${exception.argument.argumentDescription}"
         else "Options:\n\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (exception.argument.argumentIsOptional || exception.argument.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m--\u001B[1;31m${exception.argument.argumentName}${if (exception.argument.argumentShortName != null) "\u001B[0;30m, -\u001B[1;31m${exception.argument.argumentShortName}" else ""}:\n     \u001B[0;33m${exception.argument.argumentDescription}"
       }
+      
       is ArgumentException.Missing -> {
         exception.arguments.partition { it.argumentType == ArgumentType.POSITIONAL }.run {
           first.joinToString("\n") { option ->
@@ -199,7 +203,8 @@ object Utils {
       try {
         val formatter = DateTimeFormatter.ofPattern(pattern, locale).withResolverStyle(ResolverStyle.STRICT)
         return LocalDateTime.parse(input, formatter)
-      } catch (_: Exception) {}
+      } catch (_: Exception) {
+      }
     }
     return null
   }

@@ -120,7 +120,7 @@ fun NonNull<*>.user(searchMutualGuilds: Boolean = false): Argument<User> {
   return (this as Argument<User>).apply {
     argumentValidator = {
       argumentEvent.server.get().let { server ->
-        if(contains("#")) {
+        if (contains("#")) {
           server.members.firstOrNull {
             it.idAsString == this ||
             it.getDisplayName(server).equals(this, true)
@@ -134,7 +134,7 @@ fun NonNull<*>.user(searchMutualGuilds: Boolean = false): Argument<User> {
       } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
         argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
           server.getMemberById(Utils.extractDigits(this)).getOrElse {
-            if(contains("#")) {
+            if (contains("#")) {
               server.members.firstOrNull {
                 it.idAsString == this ||
                 it.getDisplayName(server).equals(this, true)
@@ -407,7 +407,7 @@ fun NonNull<*>.message(searchMutualGuilds: Boolean = false, includePrivateChanne
   return (this as Argument<Message>).apply {
     argumentValidator = {
       val matchResult = DiscordRegexPattern.MESSAGE_LINK.toRegex().matchEntire(this)
-      if(matchResult == null) {
+      if (matchResult == null) {
         argumentEvent.channel.getMessageById(this).get()
       } else {
         if (matchResult.groups["server"] == null) {

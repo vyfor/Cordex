@@ -10,7 +10,6 @@ class Arguments(@PublishedApi internal val args: Map<String, Any>) {
     get() {
       return args[argumentName] as T
     }
-  
   val <T> Argument<List<T>>.value: List<T>
     get() {
       return args[argumentName] as? List<T> ?: lazyEmptyList as List<T>

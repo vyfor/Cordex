@@ -128,7 +128,6 @@ fun Multiple<*>.doubles(): Argument<List<Double>> {
   }
 }
 
-
 /**
  * Retrieves [User]s based on the argument values.
  *
@@ -142,7 +141,7 @@ fun Multiple<*>.users(searchMutualGuilds: Boolean = false): Argument<List<User>>
     argumentListValidator = {
       map {
         argumentEvent.server.get().let { server ->
-          if(contains("#")) {
+          if (contains("#")) {
             server.members.firstOrNull { entity ->
               entity.idAsString == it ||
               entity.getDisplayName(server).equals(it, true)
@@ -156,7 +155,7 @@ fun Multiple<*>.users(searchMutualGuilds: Boolean = false): Argument<List<User>>
         } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
           argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
             server.getMemberById(Utils.extractDigits(it)).getOrElse {
-              if(contains("#")) {
+              if (contains("#")) {
                 server.members.firstOrNull { entity ->
                   entity.idAsString == it ||
                   entity.getDisplayName(server).equals(it, true)
@@ -449,7 +448,7 @@ fun Multiple<*>.messages(searchMutualGuilds: Boolean = false, includePrivateChan
     argumentListValidator = {
       map {
         val matchResult = DiscordRegexPattern.MESSAGE_LINK.toRegex().matchEntire(it)
-        if(matchResult == null) {
+        if (matchResult == null) {
           argumentEvent.channel.getMessageById(it).get()
         } else {
           if (matchResult.groups["server"] == null) {

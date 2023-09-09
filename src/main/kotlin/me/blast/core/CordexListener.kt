@@ -31,9 +31,8 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
           !(
             event.server.get().isAdmin(event.messageAuthor.asUser().get()) ||
             event.server.get().getAllowedPermissions(event.messageAuthor.asUser().get()).containsAll(permissions)
-            )
-          ) event.message.reply(Embeds.missingPermissions(permissions))
-        
+           )
+        ) event.message.reply(Embeds.missingPermissions(permissions))
         // Check for the bot's permissions in the server.
         if (
           selfPermissions != null &&
@@ -42,7 +41,6 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
             event.server.get().getAllowedPermissions(event.api.yourself).containsAll(selfPermissions)
            )
         ) event.message.reply(Embeds.missingSelfPermissions(selfPermissions))
-        
         val parsedArgs = ArgumentsParser.parse(args.drop(1), options, event, guildOnly)
         Cordex.scope.launch {
           Arguments(parsedArgs).execute(
@@ -58,7 +56,7 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
         }
       } catch (e: ArgumentException) {
         cordex.config.parsingErrorHandler?.invoke(event, this, e)
-          ?: event.message.reply(Embeds.invalidArguments(e))
+        ?: event.message.reply(Embeds.invalidArguments(e))
       } catch (e: Exception) {
         cordex.config.errorHandler?.invoke(event, this@apply, e)
         Cordex.logger.error("Error occurred while executing command $name", e)

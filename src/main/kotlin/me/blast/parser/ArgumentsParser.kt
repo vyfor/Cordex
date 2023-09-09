@@ -19,7 +19,7 @@ object ArgumentsParser {
         else if (next.startsWith('-')) it.argumentShortName == next.substring(1)
         else it.argumentType == ArgumentType.POSITIONAL
       }
-      if(arg != null) {
+      if (arg != null) {
         arg.guildOnly = guildOnly
         arg.argumentEvent = event
         when (arg.argumentType) {
@@ -27,6 +27,7 @@ object ArgumentsParser {
             map[arg.argumentName!!] = true
             validationList.remove(arg)
           }
+          
           ArgumentType.OPTION,
           ArgumentType.POSITIONAL,
           -> {
@@ -78,7 +79,7 @@ object ArgumentsParser {
         !it.argumentIsOptional
       }
     }
-    if(missingArgs.isNotEmpty()) throw ArgumentException.Missing(missingArgs)
+    if (missingArgs.isNotEmpty()) throw ArgumentException.Missing(missingArgs)
     
     return map
   }
