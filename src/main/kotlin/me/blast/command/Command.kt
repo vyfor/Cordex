@@ -18,5 +18,5 @@ abstract class Command(
   val name = name.lowercase()
   val aliases = aliases?.map { it.lowercase() }
   
-  abstract suspend fun execute(ctx: Context, args: Arguments)
+  abstract suspend fun Arguments.execute(ctx: Context)
 }

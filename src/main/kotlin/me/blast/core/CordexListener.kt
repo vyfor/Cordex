@@ -45,7 +45,7 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
         
         val parsedArgs = ArgumentsParser.parse(args.drop(1), options, event, guildOnly)
         Cordex.scope.launch {
-          execute(
+          Arguments(parsedArgs).execute(
             Context(
               event,
               event.server.get(),
@@ -53,8 +53,7 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
               event.messageAuthor.asUser().get(),
               event.message,
               prefix
-            ),
-            Arguments(parsedArgs)
+            )
           )
         }
       } catch (e: ArgumentException) {
