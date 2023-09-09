@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package me.blast.command.dsl
 
 import me.blast.command.Arguments
@@ -24,7 +26,11 @@ class CommandBuilder(val name: String) {
   var subcommands: List<Command>? = null
   var runAsDefault: Boolean = false
   var guildOnly: Boolean = false
-  lateinit var execute: suspend Arguments.(Context) -> Unit
+  private lateinit var execute: suspend Arguments.(Context) -> Unit
+  
+  fun execute(block: suspend Arguments.(Context) -> Unit) {
+    execute = block
+  }
   
   fun build(): Command {
     return object : Command(name, description, aliases, cooldown, type, permissions, selfPermissions, subcommands, runAsDefault, guildOnly) {
