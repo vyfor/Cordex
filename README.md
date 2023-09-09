@@ -28,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.reblast:Cordex:0.2.4")
+    implementation("com.github.reblast:Cordex:0.2.6")
 }
 ```
 
@@ -44,7 +44,7 @@ dependencies {
 <dependency>
     <groupId>com.github.reblast</groupId>
     <artifactId>Cordex</artifactId>
-    <version>0.2.4</version>
+    <version>0.2.6</version>
 </dependency>
 ```
 
@@ -68,20 +68,32 @@ fun main() {
 
 ### Creating a Command
 
-Define a custom command by extending the `Command` class and implementing its execute function.
-
-```kt
-class ExampleCommand : Command("example") {
-  override suspend fun execute(ctx: Context, args: Arguments) {
-    // Command logic goes here
-    ctx.message.reply("This is an example command!")
-  }
-}
-```
+There are two ways of creating commands:
+1. **Through inheritance:**
+    - Define a custom command by extending the `Command` class and implementing its execute function.
+    ```kt
+    class ExampleCommand : Command("example") {
+      override suspend fun Arguments.execute(ctx: Context) {
+        // Command logic goes here
+        ctx.message.reply("This is an example command!")
+      }
+    }
+    ```
+2. **Through the DSL function:**
+    - Define a custom command by using the `command()` function and providing necessary fields.
+    ```kt
+    command("example") {
+      execute { ctx ->
+        ctx.message.reply("This is an example command!")
+      }
+    }
+    ```
 
 #### Registering a text command
 
-Add your newly created command to the command registry using the plus sign followed by an instance of your command class or use the `load` method.
+Add your newly created command to the command registry using the following methods:
+- A plus sign followed by an instance of your command class.
+- The `load("package")` method to load classes extending the `Command` class.
 
 ```kt
 cordex("TOKEN") {
@@ -90,7 +102,6 @@ cordex("TOKEN") {
   commands {
     +ExampleCommand()
     
-    // Alternatively, you can load commands from a package
     load("me.blast.commands")
   }
 }
@@ -140,7 +151,7 @@ cordex("TOKEN") {
 
 > Cordex follows the approach of handling arguments in a way similar to how command-line interfaces (CLI) do.
 
-#### There exist 3 types of arguments:
+**There exist 3 types of arguments:**
 - **Options**
   - Options are arguments capable of accepting values.
 - **Flags**
@@ -154,16 +165,18 @@ You can define each of these argument types using their respective functions:
 class ExampleCommand : Command("example") {
   val option by option("Description") // --option, -o <value>
   val flag by flag("Description") // --flag, -f
-  val positional by positional("Description") // <value>
-  
-  override suspend fun execute(ctx: Context, args: Arguments) {
-    // And access them using args[ARGUMENT]
-    ctx.message.reply(args[option])
-  }
+  val positional by positional("Description") // [--positional] <value>
 }
 ```
 
 Names are optional; Cordex obtains them from variable names, using the first letter as the short name.
+
+#### Accessing argument values
+
+Argument values can be accessed in different ways:
+1. `option.value`
+2. `option()`
+3. `option { it -> ... }`
  
 ### Beyond the Basics
 
@@ -173,6 +186,8 @@ Arguments may be optional, hold default values, accept multiple values, and have
 val name by option().multiple(1..2) // List<String> (min: 1, max: 2)
 val age by option().optional(18) { toInt() } // Int? (default: 18)
 ```
+
+Validators also offer the capability to include custom error messages, achieved by throwing an exception with a message included.
 
 ### Predefined validators
 
@@ -197,6 +212,7 @@ Cordex provides a range of predefined validators you can utilize:
 - `url()`
 - `duration()`
 - `date()`
+- `dateTime()`
 - `color()`
 - `unicodeEmoji()`
 - `enum()`
