@@ -25,9 +25,6 @@ sealed class Argument<T>(copyFrom: Argument<*>? = null, val options: ArrayList<A
     }
   var argumentIsOptional = false
   var argumentDefaultValue: Any? = null
-  
-  // Setting first range value to 0 will make the argument optional
-  // Setting last range value to 0 will make the argument take infinite amount of values
   var argumentRange: IntRange = 1..1
   var guildOnly = false
   
