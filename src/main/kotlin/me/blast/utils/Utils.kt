@@ -13,21 +13,23 @@ import java.awt.Color
 import java.io.File
 import java.time.Duration
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.time.format.ResolverStyle
 import java.util.*
 
 object Utils {
   val DURATION_REGEX = Regex("^(\\d+(\\.\\d+)?)\\s*(\\w+)$")
   val localDatePatterns = listOf(
-    "dd.MM.yyyy",
-    "dd-MM-yyyy",
-    "yyyy.MM.dd",
-    "yyyy-MM-dd",
-    "d MMM yyyy",
-    "d MMMM",
-    "d MMM",
-    "MMMM d",
-    "yyyy"
+    "dd.MM[.yyyy][ HH:mm:ss]",
+    "dd-MM[-yyyy][ HH:mm:ss]",
+    "dd/MM[/yyyy][ HH:mm:ss]",
+    "[yyyy.]MM.dd[ HH:mm:ss]",
+    "[yyyy-]MM-dd[ HH:mm:ss]",
+    "[yyyy/]MM/dd[ HH:mm:ss]",
+    "dd MM[ yyyy][ HH:mm:ss]",
+    "dd MMM[ yyyy][ HH:mm:ss]",
+    "MMM dd[ yyyy][ HH:mm:ss]",
   )
   val lazyEmptyList = emptyList<Any>()
   
@@ -123,7 +125,7 @@ object Utils {
     options.takeIf { it.isNotEmpty() }?.let { addField("Arguments", generateArgumentUsage(it)) }
   }
   
-  fun generateArgumentUsage(options: List<Argument<*>>): String? {
+  fun generateArgumentUsage(options: List<Argument<*>>, errorMessage: String? = null): String? {
     return options.takeIf { it.isNotEmpty() }?.run {
       val formattedArgs: String
       val formattedOptions: String
@@ -135,7 +137,7 @@ object Utils {
           "\u001B[0;30m[\u001B[0;31m${if (option.argumentIsOptional || option.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m--\u001B[1;31m${option.argumentName}${if (option.argumentShortName != null) "\u001B[0;30m, -\u001B[1;31m${option.argumentShortName}" else ""}:\n     \u001B[0;33m${option.argumentDescription}"
         }
       }
-      "```ansi\n${if (formattedArgs.isEmpty()) {
+      "${if(errorMessage != null) "> ${errorMessage}\n" else ""}```ansi\n${if (formattedArgs.isEmpty()) {
         formattedOptions
       } else if (formattedOptions.isEmpty()) {
         formattedArgs
@@ -192,16 +194,15 @@ object Utils {
     )
   }
   
-  fun parseDate(input: String, locale: Locale): LocalDate? {
+  fun parseDate(input: String, locale: Locale): LocalDateTime? {
     for (pattern in localDatePatterns) {
       try {
-        val formatter = DateTimeFormatter.ofPattern(pattern, locale)
-        return LocalDate.parse(input, formatter)
+        val formatter = DateTimeFormatter.ofPattern(pattern, locale).withResolverStyle(ResolverStyle.STRICT)
+        return LocalDateTime.parse(input, formatter)
       } catch (_: Exception) {}
     }
     return null
   }
-  
 }
 
 inline fun <T> throwIf(condition: Boolean, block: () -> T): T {

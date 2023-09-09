@@ -21,9 +21,7 @@ object ArgumentsParser {
       }
       if(arg != null) {
         arg.guildOnly = guildOnly
-        if (guildOnly) {
-          arg.argumentEvent = event
-        }
+        arg.argumentEvent = event
         when (arg.argumentType) {
           ArgumentType.FLAG -> {
             map[arg.argumentName!!] = true
@@ -50,7 +48,7 @@ object ArgumentsParser {
                 map[arg.argumentName!!] = arg.argumentValidator?.invoke(arguments.joinToString(" ")) ?: arg.argumentListValidator?.invoke(arguments) ?: arguments
                 validationList.remove(arg)
               } catch (e: Exception) {
-                throw ArgumentException.Invalid(arg, arguments.joinToString(" "))
+                throw ArgumentException.Invalid(arg, arguments.joinToString(" "), e.message)
               }
             } else {
               val nextArg: String
@@ -65,7 +63,7 @@ object ArgumentsParser {
                 map[arg.argumentName!!] = arg.argumentValidator?.invoke(nextArg) ?: nextArg
                 validationList.remove(arg)
               } catch (e: Exception) {
-                throw ArgumentException.Invalid(arg, nextArg)
+                throw ArgumentException.Invalid(arg, nextArg, e.message)
               }
             }
           }
