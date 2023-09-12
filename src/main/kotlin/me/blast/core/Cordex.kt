@@ -15,7 +15,7 @@ import org.javacord.api.event.message.MessageCreateEvent
 import org.slf4j.LoggerFactory
 
 object Cordex {
-  const val VERSION = "0.2.6"
+  const val VERSION = "0.2.7"
   val logger = LoggerFactory.getLogger(Cordex::class.java)
   val scope = CoroutineScope(Dispatchers.Default)
 }
