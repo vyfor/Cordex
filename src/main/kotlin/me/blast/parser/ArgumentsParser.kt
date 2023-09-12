@@ -7,7 +7,7 @@ import me.blast.utils.Utils.takeWhileWithIndex
 import org.javacord.api.event.message.MessageCreateEvent
 
 object ArgumentsParser {
-  @Throws(ArgumentException::class, IllegalArgumentException::class)
+  @Throws(ArgumentException::class)
   fun parse(input: List<String>, options: List<Argument<*>>, event: MessageCreateEvent, guildOnly: Boolean): Map<String, Any> {
     val args = input.listIterator()
     val validationList = options.toMutableList()
