@@ -569,3 +569,35 @@ inline fun <reified T : Enum<T>> OptionalArg<*>.enum(): Argument<T?> {
     }
   }
 }
+
+/**
+ * Maps argument value(s) to corresponding [T] value(s) from the given map.
+ *
+ * Use [maps] to convert each value separately.
+ *
+ * @param ignoreCase Whether to convert the provided value(s) to lowercase before retrieving.
+ * @return An Argument containing the retrieved nullable [T] value.
+ */
+fun <T> OptionalArg<*>.map(values: Map<String, T>, ignoreCase: Boolean = false): Argument<T?> {
+  return (this as Argument<T?>).apply {
+    argumentValidator = {
+      values[if(ignoreCase) lowercase() else this]!!
+    }
+  }
+}
+
+/**
+ * Maps argument value(s) to corresponding [T] value(s) from the given array of pairs.
+ *
+ * Use [maps] to convert each value separately.
+ *
+ * @param ignoreCase Whether to convert the provided value(s) to lowercase before retrieving.
+ * @return An Argument containing the retrieved nullable [T] value.
+ */
+fun <T> OptionalArg<*>.map(vararg values: Pair<String, T>, ignoreCase: Boolean = false): Argument<T?> {
+  return (this as Argument<T?>).apply {
+    argumentValidator = {
+      mapOf(*values)[if(ignoreCase) lowercase() else this]!!
+    }
+  }
+}

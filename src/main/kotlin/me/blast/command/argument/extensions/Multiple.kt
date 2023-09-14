@@ -637,6 +637,42 @@ inline fun <reified T : Enum<T>> Multiple<*>.enums(): Argument<T> {
 }
 
 /**
+ * Maps the argument values to corresponding [T] value(s) from the given map.
+ *
+ * Use [map] to convert multiple values into a single one.
+ *
+ * @param ignoreCase Whether to convert the provided values to lowercase before retrieving.
+ * @return An Argument containing a list with retrieved [T] values.
+ */
+fun <T> Multiple<*>.maps(values: Map<String, T>, ignoreCase: Boolean = false): Argument<List<T>> {
+  return (this as Argument<List<T>>).apply {
+    argumentListValidator = {
+      map {
+        values[if(ignoreCase) it.lowercase() else it]!!
+      }
+    }
+  }
+}
+
+/**
+ * Maps the argument values to corresponding [T] value(s) from the given array of pairs.
+ *
+ * Use [map] to convert multiple values into a single one.
+ *
+ * @param ignoreCase Whether to convert the provided values to lowercase before retrieving.
+ * @return An Argument containing a list with retrieved [T] values.
+ */
+fun <T> Multiple<*>.maps(vararg values: Pair<String, T>, ignoreCase: Boolean = false): Argument<List<T>> {
+  return (this as Argument<List<T>>).apply {
+    argumentListValidator = {
+      map {
+        mapOf(*values)[if(ignoreCase) it.lowercase() else it]!!
+      }
+    }
+  }
+}
+
+/**
  * Joins the argument values into one string.
  *
  * @return An Argument containing the combined value.
