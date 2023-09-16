@@ -2,6 +2,7 @@ package me.blast.utils.command
 
 import me.blast.parser.exception.ArgumentException
 import me.blast.utils.command.CommandUtils.generateArgumentError
+import me.blast.utils.cooldown.CooldownType
 import org.javacord.api.entity.message.embed.EmbedBuilder
 import org.javacord.api.entity.permission.PermissionType
 import java.awt.Color
@@ -35,6 +36,18 @@ object Embeds {
   fun commandNotFound(command: String, suggestions: Set<String>, prefix: String) = EmbedBuilder().apply {
     setTitle("Command with name `$command` could not be found!")
     setDescription("Did you mean:\n${suggestions.joinToString("\n") { "`$prefix$it`" }}")
+    setColor(Color.RED)
+  }
+  
+  fun userHitCooldown(timeLeft: Long, cooldownType: CooldownType) = EmbedBuilder().apply {
+    setTitle(
+      when (cooldownType) {
+        CooldownType.USER -> "You are"
+        CooldownType.CHANNEL -> "This channel is"
+        CooldownType.SERVER -> "This server is"
+      } + " currently on a cooldown for this command"
+    )
+    setDescription("The command can be used again in ${String.format("%.1f", timeLeft / 1000.0)} seconds.")
     setColor(Color.RED)
   }
 }
