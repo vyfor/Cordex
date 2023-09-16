@@ -4,10 +4,10 @@ package me.blast.command.argument.extensions
 
 import me.blast.command.argument.Argument
 import me.blast.command.argument.Multiple
-import me.blast.utils.Snowflake
+import me.blast.utils.entity.Snowflake
 import me.blast.utils.Utils
 import me.blast.utils.Utils.hasValue
-import me.blast.utils.throwUnless
+import me.blast.utils.extensions.throwUnless
 import net.fellbaum.jemoji.Emoji
 import net.fellbaum.jemoji.EmojiManager
 import org.javacord.api.entity.channel.*
@@ -18,7 +18,7 @@ import org.javacord.api.entity.user.User
 import org.javacord.api.util.DiscordRegexPattern
 import java.awt.Color
 import java.net.URL
-import java.time.Duration
+import kotlin.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*

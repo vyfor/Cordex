@@ -1,6 +1,6 @@
 @file:Suppress("unused", "MemberVisibilityCanBePrivate", "CanBeParameter")
 
-package me.blast.utils
+package me.blast.utils.entity
 
 import java.time.Instant
 

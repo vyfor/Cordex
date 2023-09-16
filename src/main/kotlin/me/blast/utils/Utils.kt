@@ -2,14 +2,7 @@
 
 package me.blast.utils
 
-import me.blast.command.Command
-import me.blast.command.argument.Argument
-import me.blast.command.argument.builder.ArgumentType
 import me.blast.core.Cordex
-import me.blast.parser.exception.ArgumentException
-import org.javacord.api.entity.message.MessageAuthor
-import org.javacord.api.entity.message.embed.EmbedBuilder
-import java.awt.Color
 import java.io.File
 import java.time.Duration
 import java.time.LocalDateTime
@@ -110,74 +103,11 @@ object Utils {
     return resultList
   }
   
+  fun <T> Optional<T>.hasValue() = orElse(null) != null
+  
   fun <T> Optional<T>.toNullable(): T? {
     return orElse(null)
   }
-  
-  fun Command.generateHelpMessage(user: MessageAuthor) = EmbedBuilder().apply {
-    setTitle("Help for ${name.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }} command")
-    if (aliases?.isNotEmpty() == true) addField("Aliases", aliases.joinToString(prefix = "`", separator = "`, `", postfix = "`"))
-    addField("Description", description)
-    setFooter(user.name, user.avatar)
-    setTimestampToNow()
-    setColor(Color.RED)
-    options.takeIf { it.isNotEmpty() }?.let { addField("Arguments", generateArgumentUsage(it)) }
-  }
-  
-  fun generateArgumentUsage(options: List<Argument<*>>, errorMessage: String? = null): String? {
-    return options.takeIf { it.isNotEmpty() }?.run {
-      val formattedArgs: String
-      val formattedOptions: String
-      partition { it.argumentType == ArgumentType.POSITIONAL }.apply {
-        formattedArgs = first.joinToString("\n") { option ->
-          "\u001B[0;30m[\u001B[0;31m${if (option.argumentIsOptional || option.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m<\u001B[1;31m${option.argumentName}\u001B[0;30m>:\n     \u001B[0;33m${option.argumentDescription}"
-        }
-        formattedOptions = second.joinToString("\n") { option ->
-          "\u001B[0;30m[\u001B[0;31m${if (option.argumentIsOptional || option.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m--\u001B[1;31m${option.argumentName}${if (option.argumentShortName != null) "\u001B[0;30m, -\u001B[1;31m${option.argumentShortName}" else ""}:\n     \u001B[0;33m${option.argumentDescription}"
-        }
-      }
-      "${if (errorMessage != null) "> ${errorMessage}\n" else ""}```ansi\n${
-        if (formattedArgs.isEmpty()) {
-          formattedOptions
-        } else if (formattedOptions.isEmpty()) {
-          formattedArgs
-        } else {
-          "\u001B[1;37mPositional Arguments\n$formattedArgs\n\n\u001B[1;37mOptions\n$formattedOptions"
-        }
-      }```"
-    }
-  }
-  
-  fun generateArgumentError(exception: ArgumentException): String {
-    return when (exception) {
-      is ArgumentException.Empty -> {
-        if (exception.argument.argumentType == ArgumentType.POSITIONAL) "Positional Arguments:\n\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (exception.argument.argumentIsOptional || exception.argument.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m<\u001B[1;31m${exception.argument.argumentName}\u001B[0;30m>:\n     \u001B[0;33m${exception.argument.argumentDescription}"
-        else "Options:\n\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (exception.argument.argumentIsOptional || exception.argument.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m--\u001B[1;31m${exception.argument.argumentName}${if (exception.argument.argumentShortName != null) "\u001B[0;30m, -\u001B[1;31m${exception.argument.argumentShortName}" else ""}:\n     \u001B[0;33m${exception.argument.argumentDescription}"
-      }
-      
-      is ArgumentException.Insufficient -> {
-        if (exception.argument.argumentType == ArgumentType.POSITIONAL) "Positional Arguments:\n\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (exception.argument.argumentIsOptional || exception.argument.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m<\u001B[1;31m${exception.argument.argumentName}\u001B[0;30m>:\n     \u001B[0;33m${exception.argument.argumentDescription}"
-        else "Options:\n\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (exception.argument.argumentIsOptional || exception.argument.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m--\u001B[1;31m${exception.argument.argumentName}${if (exception.argument.argumentShortName != null) "\u001B[0;30m, -\u001B[1;31m${exception.argument.argumentShortName}" else ""}:\n     \u001B[0;33m${exception.argument.argumentDescription}"
-      }
-      
-      is ArgumentException.Invalid -> {
-        if (exception.argument.argumentType == ArgumentType.POSITIONAL) "Positional Arguments:\n\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (exception.argument.argumentIsOptional || exception.argument.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m<\u001B[1;31m${exception.argument.argumentName}\u001B[0;30m>:\n     \u001B[0;33m${exception.argument.argumentDescription}"
-        else "Options:\n\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (exception.argument.argumentIsOptional || exception.argument.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m--\u001B[1;31m${exception.argument.argumentName}${if (exception.argument.argumentShortName != null) "\u001B[0;30m, -\u001B[1;31m${exception.argument.argumentShortName}" else ""}:\n     \u001B[0;33m${exception.argument.argumentDescription}"
-      }
-      
-      is ArgumentException.Missing -> {
-        exception.arguments.partition { it.argumentType == ArgumentType.POSITIONAL }.run {
-          first.joinToString("\n") { option ->
-            "\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (option.argumentIsOptional || option.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m<\u001B[1;31m${option.argumentName}\u001B[0;30m>:\n     \u001B[0;33m${option.argumentDescription}"
-          } + second.joinToString("\n") { option ->
-            "\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (option.argumentIsOptional || option.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m--\u001B[1;31m${option.argumentName}${if (option.argumentShortName != null) "\u001B[0;30m, -\u001B[1;31m${option.argumentShortName}" else ""}:\n     \u001B[0;33m${option.argumentDescription}"
-          }
-        }
-      }
-    }
-  }
-  
-  fun <T> Optional<T>.hasValue() = orElse(null) != null
   
   fun parseDuration(input: String): Duration? {
     val matchResult = DURATION_REGEX.matchEntire(input) ?: return null
@@ -187,10 +117,10 @@ object Utils {
     
     return Duration.ofSeconds(
       when (timeUnit.lowercase()) {
-        "mo", "month", "months" -> (floatValue * 30.4375 * 24 * 60 * 60).toLong()
-        "w", "week", "weeks" -> (floatValue * 7 * 24 * 60 * 60).toLong()
-        "d", "day", "days" -> (floatValue * 24 * 60 * 60).toLong()
-        "h", "hour", "hours" -> (floatValue * 60 * 60).toLong()
+        "mo", "month", "months" -> (floatValue * 2592000).toLong()
+        "w", "week", "weeks" -> (floatValue * 604800).toLong()
+        "d", "day", "days" -> (floatValue * 8640).toLong()
+        "h", "hour", "hours" -> (floatValue * 3600).toLong()
         "m", "min", "mins", "minute", "minutes" -> (floatValue * 60).toLong()
         "s", "sec", "secs", "second", "seconds" -> floatValue.toLong()
         else -> throw IllegalArgumentException()
@@ -210,14 +140,3 @@ object Utils {
   }
 }
 
-inline fun <T> throwIf(condition: Boolean, block: () -> T): T {
-  if (!condition) {
-    return block()
-  } else throw IllegalArgumentException()
-}
-
-inline fun <T> throwUnless(condition: Boolean, block: () -> T): T {
-  if (condition) {
-    return block()
-  } else throw IllegalArgumentException()
-}
