@@ -5,8 +5,9 @@ import me.blast.command.Arguments
 import me.blast.command.Context
 import me.blast.parser.ArgumentsParser
 import me.blast.parser.exception.ArgumentException
-import me.blast.utils.Embeds
 import me.blast.utils.Utils.hasValue
+import me.blast.utils.command.CommandUtils
+import me.blast.utils.command.Embeds
 import org.javacord.api.event.message.MessageCreateEvent
 import org.javacord.api.listener.message.MessageCreateListener
 
@@ -60,6 +61,17 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
       } catch (e: Exception) {
         cordex.config.errorHandler?.invoke(event, this@apply, e)
         Cordex.logger.error("Error occurred while executing command $name", e)
+      }
+    } ?: run {
+      // Let us agree, you wouldn't give a command a thirty character length name, or would you?
+      if (cordex.config.enableCommandSuggestions && args[0].length <= 30) {
+        event.message.reply(
+          Embeds.commandNotFound(
+            args[0],
+            CommandUtils.findClosestCommands(args[0], cordex.handler.getCommands().keys, cordex.config.commandSuggestionAccuracy.maxDistance),
+            prefix
+          )
+        )
       }
     }
   }
