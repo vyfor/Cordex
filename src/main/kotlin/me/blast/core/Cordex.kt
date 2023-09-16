@@ -10,7 +10,9 @@ import kotlinx.coroutines.future.await
 import me.blast.command.Command
 import me.blast.parser.exception.ArgumentException
 import me.blast.utils.command.suggestions.DistanceAccuracy
+import me.blast.utils.cooldown.Cooldown
 import me.blast.utils.cooldown.CooldownManager
+import me.blast.utils.cooldown.CooldownType
 import org.javacord.api.DiscordApi
 import org.javacord.api.DiscordApiBuilder
 import org.javacord.api.event.message.MessageCreateEvent
@@ -87,6 +89,15 @@ class CordexBuilder(token: String) {
    */
   fun onParseError(block: (MessageCreateEvent, Command, ArgumentException) -> Unit) {
     config.parsingErrorHandler = block
+  }
+  
+  /**
+   * Set a handler for when a user hits the cooldown.
+   *
+   * @param block The block of code to execute when a user hits the cooldown.
+   */
+  fun onCooldown(block: (MessageCreateEvent, Command, Cooldown, CooldownType) -> Unit) {
+    config.cooldownHandler = block
   }
 }
 
