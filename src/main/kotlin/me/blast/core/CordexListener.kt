@@ -8,6 +8,7 @@ import me.blast.parser.exception.ArgumentException
 import me.blast.utils.Utils.hasValue
 import me.blast.utils.command.CommandUtils
 import me.blast.utils.command.Embeds
+import me.blast.utils.cooldown.CooldownType
 import org.javacord.api.event.message.MessageCreateEvent
 import org.javacord.api.listener.message.MessageCreateListener
 
@@ -42,6 +43,36 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
             event.server.get().getAllowedPermissions(event.api.yourself).containsAll(selfPermissions)
            )
         ) event.message.reply(Embeds.missingSelfPermissions(selfPermissions))
+        
+        if (
+          userCooldown.isPositive() &&
+          cordex.cooldownManager.isUserOnCooldown(name, event.messageAuthor.id, userCooldown.inWholeMilliseconds)
+        ) {
+          cordex.cooldownManager.getUserCooldown(name, event.messageAuthor.id)?.endTime?.let {
+            event.message.reply(Embeds.userHitCooldown(it - System.currentTimeMillis(), CooldownType.USER))
+            return
+          }
+        }
+        
+        if (
+          channelCooldown.isPositive() &&
+          cordex.cooldownManager.isChannelOnCooldown(name, event.messageAuthor.id, channelCooldown.inWholeMilliseconds)
+        ) {
+          cordex.cooldownManager.getChannelCooldown(name, event.messageAuthor.id)?.endTime?.let {
+            event.message.reply(Embeds.userHitCooldown(it - System.currentTimeMillis(), CooldownType.CHANNEL))
+            return
+          }
+        }
+        
+        if (
+          serverCooldown.isPositive() &&
+          cordex.cooldownManager.isServerOnCooldown(name, event.messageAuthor.id, serverCooldown.inWholeMilliseconds)
+        ) {
+          cordex.cooldownManager.getServerCooldown(name, event.messageAuthor.id)?.endTime?.let {
+            event.message.reply(Embeds.userHitCooldown(it - System.currentTimeMillis(), CooldownType.SERVER))
+            return
+          }
+        }
         val parsedArgs = ArgumentsParser.parse(args.drop(1), options, event, guildOnly)
         Cordex.scope.launch {
           Arguments(parsedArgs).execute(

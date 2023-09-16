@@ -10,6 +10,7 @@ import kotlinx.coroutines.future.await
 import me.blast.command.Command
 import me.blast.parser.exception.ArgumentException
 import me.blast.utils.command.suggestions.DistanceAccuracy
+import me.blast.utils.cooldown.CooldownManager
 import org.javacord.api.DiscordApi
 import org.javacord.api.DiscordApiBuilder
 import org.javacord.api.event.message.MessageCreateEvent
@@ -24,6 +25,7 @@ object Cordex {
 class CordexBuilder(token: String) {
   val config = CordexConfiguration()
   val handler = CordexCommands()
+  val cooldownManager = CooldownManager()
   val api = DiscordApiBuilder().setToken(token)
   
   /**

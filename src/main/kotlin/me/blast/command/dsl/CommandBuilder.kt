@@ -6,6 +6,7 @@ import me.blast.command.Arguments
 import me.blast.command.Command
 import me.blast.command.Context
 import org.javacord.api.entity.permission.PermissionType
+import kotlin.time.Duration
 
 fun command(
   name: String,
@@ -19,12 +20,14 @@ fun command(
 class CommandBuilder(val name: String) {
   var description: String = "No description provided."
   var aliases: List<String>? = null
-  var cooldown: Long = 0
   var type: String? = null
   var permissions: List<PermissionType>? = null
   var selfPermissions: List<PermissionType>? = null
   var subcommands: List<Command>? = null
   var runAsDefault: Boolean = false
+  var userCooldown: Duration = Duration.ZERO
+  var channelCooldown: Duration = Duration.ZERO
+  var serverCooldown: Duration = Duration.ZERO
   var guildOnly: Boolean = false
   private lateinit var execute: suspend Arguments.(Context) -> Unit
   
@@ -33,7 +36,7 @@ class CommandBuilder(val name: String) {
   }
   
   fun build(): Command {
-    return object : Command(name, description, aliases, cooldown, type, permissions, selfPermissions, subcommands, runAsDefault, guildOnly) {
+    return object : Command(name, description, aliases, type, permissions, selfPermissions, subcommands, userCooldown, channelCooldown, serverCooldown, runAsDefault, guildOnly) {
       override suspend fun Arguments.execute(ctx: Context) {
         this@CommandBuilder.execute(this, ctx)
       }
