@@ -216,11 +216,35 @@ Cordex provides a range of predefined validators you can utilize:
 - `color()`
 - `unicodeEmoji()`
 - `enum()`
+- `map()`
 
 > [!NOTE]
 > These methods combine multiple input values (from multi-value arguments) into a single string and try to convert the combined result to the appropriate type.
 > 
 > If you want each input value to be converted separately, use the same function with a plural name. *e.g.* `users()` `roles()` 
+
+### Command Suggestions
+**Cordex** offers a feature known as command suggestions, allowing the bot to proactively suggest commands that closely match any incorrectly provided by the user.
+
+To enable this functionality, simply include the following line of code:
+```kt
+cordex("TOKEN") {
+  enableCommandSuggestion(DistanceAccuracy)
+}
+```
+Here, the parameter `DistanceAccuracy` represents the level of precision in matching input string with defined commands.
+
+### Extras
+Here are some additional features offered by **Cordex**:
+- Command permissions
+- Command cooldowns
+
+*(Soon)*
+- Slash command support
+- `Attachment` argument type
+- Command categorization
+- Subcommands
+- Pagination
 
 ## 📚 Dependencies
 **Cordex relies on these amazing libraries:**
@@ -234,4 +258,4 @@ Cordex provides a range of predefined validators you can utilize:
 
 ## 📝 TODO
 - [ ] Add support for slash commands and attachments.
-- [ ] Provide support for other minor features. (cooldowns, permissions, categories)
+- [ ] Provide support for other minor features. (categories, pagination, and more...)
