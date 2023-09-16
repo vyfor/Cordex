@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.future.await
 import me.blast.command.Command
 import me.blast.parser.exception.ArgumentException
+import me.blast.utils.command.suggestions.DistanceAccuracy
 import org.javacord.api.DiscordApi
 import org.javacord.api.DiscordApiBuilder
 import org.javacord.api.event.message.MessageCreateEvent
@@ -35,11 +36,28 @@ class CordexBuilder(token: String) {
   }
   
   /**
+   * Enable sending command suggestions when a command the user provided is not found.
+   *
+   * @property accuracy Level of strictness for matching user input to commands.
+   */
+  fun enableCommandSuggestion(accuracy: DistanceAccuracy = DistanceAccuracy.STRICT) {
+    config.enableCommandSuggestions = true
+    config.commandSuggestionAccuracy = accuracy
+  }
+  
+  /**
+   * Disable command suggestions.
+   */
+  fun disableCommandSuggestion() {
+    config.enableCommandSuggestions = false
+  }
+  
+  /**
    * Configure the [DiscordApiBuilder].
    *
    * @param block The configuration block for [DiscordApiBuilder].
    */
-  fun config(block: DiscordApiBuilder.() -> Unit) = block(api)
+  fun api(block: DiscordApiBuilder.() -> Unit) = block(api)
   
   /**
    * Add or remove bot commands.

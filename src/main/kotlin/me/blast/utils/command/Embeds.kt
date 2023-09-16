@@ -1,7 +1,7 @@
-package me.blast.utils
+package me.blast.utils.command
 
 import me.blast.parser.exception.ArgumentException
-import me.blast.utils.Utils.generateArgumentError
+import me.blast.utils.command.CommandUtils.generateArgumentError
 import org.javacord.api.entity.message.embed.EmbedBuilder
 import org.javacord.api.entity.permission.PermissionType
 import java.awt.Color
@@ -29,6 +29,12 @@ object Embeds {
   fun missingSelfPermissions(permissions: List<PermissionType>) = EmbedBuilder().apply {
     setTitle("I'm missing one or more of the following permissions!")
     setDescription(permissions.joinToString(", ") { "`${it.name}`" })
+    setColor(Color.RED)
+  }
+  
+  fun commandNotFound(command: String, suggestions: Set<String>, prefix: String) = EmbedBuilder().apply {
+    setTitle("Command with name `$command` could not be found!")
+    setDescription("Did you mean:\n${suggestions.joinToString("\n") { "`$prefix$it`" }}")
     setColor(Color.RED)
   }
 }
