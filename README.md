@@ -28,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.reblast:Cordex:0.2.7")
+    implementation("com.github.reblast:Cordex:0.3")
 }
 ```
 
@@ -44,7 +44,7 @@ dependencies {
 <dependency>
     <groupId>com.github.reblast</groupId>
     <artifactId>Cordex</artifactId>
-    <version>0.2.7</version>
+    <version>0.3</version>
 </dependency>
 ```
 
@@ -52,14 +52,14 @@ dependencies {
 
 ### Setting up Cordex
 
-Initialize Cordex by setting your bot token. You can configure the created DiscordApiBuilder inside the `config` block.
+Initialize Cordex by setting your bot token. You can configure the created DiscordApiBuilder inside the `api` block.
 
 ```kt
 fun main() {
   cordex("TOKEN") {
     prefix { "~" }
     
-    config {
+    api {
       setAllIntents()
     }
   }
@@ -216,11 +216,61 @@ Cordex provides a range of predefined validators you can utilize:
 - `color()`
 - `unicodeEmoji()`
 - `enum()`
+- `map()`
 
 > [!NOTE]
 > These methods combine multiple input values (from multi-value arguments) into a single string and try to convert the combined result to the appropriate type.
 > 
 > If you want each input value to be converted separately, use the same function with a plural name. *e.g.* `users()` `roles()` 
+
+### Command Suggestions
+**Cordex** offers a feature known as command suggestions, allowing the bot to proactively suggest commands that closely match any incorrectly provided by the user.
+
+To enable this functionality, simply include the following line of code:
+```kt
+cordex("TOKEN") {
+  enableCommandSuggestion(DistanceAccuracy)
+}
+```
+Here, the parameter `DistanceAccuracy` represents the level of precision in matching input string with defined commands.
+
+### Pagination
+You can create a paginator that goes through a given list using the `List<T>.paginate` or` List<T>.paginateDefault` function.
+The `paginateDefault` function provides the same pagination features but with default handlers attached.
+
+The syntax is as follows:
+```kt
+List<T>.paginate(
+  channel = ctx.channel,
+  messageEvent = ctx.event,
+  itemsPerPage = 1,
+  onStart = { messageEvent, paginator, currentItems ->  
+    MessageBuilder().setContent(currentItems.joinToString("\n"))
+  },
+  onPagination = { message, paginator, currentItems ->
+    MessageUpdater(message).setContent(currentItems.joinToString("\n"))
+  },
+  onEmpty = {
+    MessageBuilder().setContent("No items found")
+  },
+  removeAfter = 2.minutes,
+  canClose = true // Adds a button to close the paginator
+)
+```
+
+> Take a look at [PaginationUtils.kt](src/main/kotlin/me/blast/utils/pagination/PaginationUtils.kt) to see a complete example.
+
+### Extras
+Here are some additional features offered by **Cordex**:
+- Command permissions
+- Command cooldowns
+
+*(Soon)*
+- Slash command support
+- `Attachment` argument type
+- Command categorization
+- Subcommands
+- Pagination
 
 ## 📚 Dependencies
 **Cordex relies on these amazing libraries:**
@@ -234,4 +284,4 @@ Cordex provides a range of predefined validators you can utilize:
 
 ## 📝 TODO
 - [ ] Add support for slash commands and attachments.
-- [ ] Provide support for other minor features. (cooldowns, permissions, categories)
+- [ ] Provide support for other minor features. (categories, pagination, and more...)
