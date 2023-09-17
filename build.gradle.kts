@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.github.reblast"
-version = "0.3"
+version = "0.3.1"
 
 repositories {
     mavenCentral()

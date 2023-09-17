@@ -28,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.reblast:Cordex:0.3")
+    implementation("com.github.reblast:Cordex:0.3.1")
 }
 ```
 
@@ -44,7 +44,7 @@ dependencies {
 <dependency>
     <groupId>com.github.reblast</groupId>
     <artifactId>Cordex</artifactId>
-    <version>0.3</version>
+    <version>0.3.1</version>
 </dependency>
 ```
 
