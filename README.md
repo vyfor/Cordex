@@ -260,17 +260,17 @@ List<T>.paginate(
 
 > Take a look at [PaginationUtils.kt](src/main/kotlin/me/blast/utils/pagination/PaginationUtils.kt) to see a complete example.
 
-### Extras
-Here are some additional features offered by **Cordex**:
-- Command permissions
-- Command cooldowns
+### Command Interceptors
+As the name suggests, command interceptors intercept a command's execution and run the given block of code.
+The block must return a boolean value, indicating whether to continue the execution or not.
 
-*(Soon)*
-- Slash command support
-- `Attachment` argument type
-- Command categorization
-- Subcommands
-- Pagination
+```kt
+cordex("TOKEN") {
+  intercept("refresh") { event, command ->
+    event.server.get().id == 0123456789L
+  }
+}
+```
 
 ## 📚 Dependencies
 **Cordex relies on these amazing libraries:**
@@ -284,4 +284,8 @@ Here are some additional features offered by **Cordex**:
 
 ## 📝 TODO
 - [ ] Add support for slash commands and attachments.
-- [ ] Provide support for other minor features. (categories, pagination, and more...)
+- [ ] Provide support for other minor features:
+  - Slash command support
+  - `Attachment` argument type
+  - Command categorization
+  - Subcommands
