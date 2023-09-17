@@ -110,6 +110,15 @@ class CordexBuilder(token: String) {
   fun intercept(command: String, block: (MessageCreateEvent, Command) -> Boolean) {
     config.interceptors[command.lowercase()] = block
   }
+  
+  /**
+   * Removes the interceptor associated with the given command.
+   *
+   * @param command Command to remove from interceptors.
+   */
+  fun removeInterceptor(command: String) {
+    config.interceptors.remove(command.lowercase())
+  }
 }
 
 /**
