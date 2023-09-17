@@ -99,6 +99,17 @@ class CordexBuilder(token: String) {
   fun onCooldown(block: (MessageCreateEvent, Command, Cooldown, CooldownType) -> Unit) {
     config.cooldownHandler = block
   }
+  
+  /**
+   * Adds an interceptor that runs before given command's execution.
+   *
+   * @param command Command to intercept.
+   * @param block The block of code to run.
+   * Return true to continue the execution of the command, false otherwise.
+   */
+  fun intercept(command: String, block: (MessageCreateEvent, Command) -> Boolean) {
+    config.interceptors[command.lowercase()] = block
+  }
 }
 
 /**

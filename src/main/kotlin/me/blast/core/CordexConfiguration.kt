@@ -14,4 +14,5 @@ class CordexConfiguration {
   var cooldownHandler: ((MessageCreateEvent, Command, Cooldown, CooldownType) -> Unit)? = null
   var enableCommandSuggestions: Boolean = false
   var commandSuggestionAccuracy: DistanceAccuracy = DistanceAccuracy.STRICT
+  val interceptors: MutableMap<String, (MessageCreateEvent, Command) -> Boolean> = mutableMapOf()
 }
