@@ -52,14 +52,14 @@ dependencies {
 
 ### Setting up Cordex
 
-Initialize Cordex by setting your bot token. You can configure the created DiscordApiBuilder inside the `config` block.
+Initialize Cordex by setting your bot token. You can configure the created DiscordApiBuilder inside the `api` block.
 
 ```kt
 fun main() {
   cordex("TOKEN") {
     prefix { "~" }
     
-    config {
+    api {
       setAllIntents()
     }
   }
