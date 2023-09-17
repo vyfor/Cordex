@@ -48,8 +48,9 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
           userCooldown.isPositive() &&
           cordex.cooldownManager.isUserOnCooldown(name, event.messageAuthor.id, userCooldown.inWholeMilliseconds)
         ) {
-          cordex.cooldownManager.getUserCooldown(name, event.messageAuthor.id)?.endTime?.let {
-            event.message.reply(Embeds.userHitCooldown(it - System.currentTimeMillis(), CooldownType.USER))
+          cordex.cooldownManager.getUserCooldown(name, event.messageAuthor.id)?.let {
+            cordex.config.cooldownHandler?.invoke(event, this, it, CooldownType.USER)
+            ?: event.message.reply(Embeds.userHitCooldown(it.endTime - System.currentTimeMillis(), CooldownType.USER))
             return
           }
         }
@@ -58,8 +59,9 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
           channelCooldown.isPositive() &&
           cordex.cooldownManager.isChannelOnCooldown(name, event.messageAuthor.id, channelCooldown.inWholeMilliseconds)
         ) {
-          cordex.cooldownManager.getChannelCooldown(name, event.messageAuthor.id)?.endTime?.let {
-            event.message.reply(Embeds.userHitCooldown(it - System.currentTimeMillis(), CooldownType.CHANNEL))
+          cordex.cooldownManager.getChannelCooldown(name, event.messageAuthor.id)?.let {
+            cordex.config.cooldownHandler?.invoke(event, this, it, CooldownType.CHANNEL)
+            ?: event.message.reply(Embeds.userHitCooldown(it.endTime - System.currentTimeMillis(), CooldownType.CHANNEL))
             return
           }
         }
@@ -68,8 +70,9 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
           serverCooldown.isPositive() &&
           cordex.cooldownManager.isServerOnCooldown(name, event.messageAuthor.id, serverCooldown.inWholeMilliseconds)
         ) {
-          cordex.cooldownManager.getServerCooldown(name, event.messageAuthor.id)?.endTime?.let {
-            event.message.reply(Embeds.userHitCooldown(it - System.currentTimeMillis(), CooldownType.SERVER))
+          cordex.cooldownManager.getServerCooldown(name, event.messageAuthor.id)?.let {
+            cordex.config.cooldownHandler?.invoke(event, this, it, CooldownType.SERVER)
+            ?: event.message.reply(Embeds.userHitCooldown(it.endTime - System.currentTimeMillis(), CooldownType.SERVER))
             return
           }
         }
@@ -96,13 +99,15 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
     } ?: run {
       // Let us agree, you wouldn't give a command a thirty character length name, or would you?
       if (cordex.config.enableCommandSuggestions && args[0].length <= 30) {
-        event.message.reply(
-          Embeds.commandNotFound(
-            args[0],
-            CommandUtils.findClosestCommands(args[0], cordex.handler.getCommands().keys, cordex.config.commandSuggestionAccuracy.maxDistance),
-            prefix
+        CommandUtils.findClosestCommands(args[0], cordex.handler.getCommands().keys, cordex.config.commandSuggestionAccuracy.maxDistance).let {
+          if(it.isNotEmpty()) event.message.reply(
+            Embeds.commandNotFound(
+              args[0],
+              it,
+              prefix
+            )
           )
-        )
+        }
       }
     }
   }
