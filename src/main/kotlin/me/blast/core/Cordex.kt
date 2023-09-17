@@ -10,14 +10,16 @@ import kotlinx.coroutines.future.await
 import me.blast.command.Command
 import me.blast.parser.exception.ArgumentException
 import me.blast.utils.command.suggestions.DistanceAccuracy
+import me.blast.utils.cooldown.Cooldown
 import me.blast.utils.cooldown.CooldownManager
+import me.blast.utils.cooldown.CooldownType
 import org.javacord.api.DiscordApi
 import org.javacord.api.DiscordApiBuilder
 import org.javacord.api.event.message.MessageCreateEvent
 import org.slf4j.LoggerFactory
 
 object Cordex {
-  const val VERSION = "0.2.7"
+  const val VERSION = "0.3.1"
   val logger = LoggerFactory.getLogger(Cordex::class.java)
   val scope = CoroutineScope(Dispatchers.Default)
 }
@@ -87,6 +89,26 @@ class CordexBuilder(token: String) {
    */
   fun onParseError(block: (MessageCreateEvent, Command, ArgumentException) -> Unit) {
     config.parsingErrorHandler = block
+  }
+  
+  /**
+   * Set a handler for when a user hits the cooldown.
+   *
+   * @param block The block of code to execute when a user hits the cooldown.
+   */
+  fun onCooldown(block: (MessageCreateEvent, Command, Cooldown, CooldownType) -> Unit) {
+    config.cooldownHandler = block
+  }
+  
+  /**
+   * Adds an interceptor that runs before given command's execution.
+   *
+   * @param command Command to intercept.
+   * @param block The block of code to run.
+   * Return true to continue the execution of the command, false otherwise.
+   */
+  fun intercept(command: String, block: (MessageCreateEvent, Command) -> Boolean) {
+    config.interceptors[command.lowercase()] = block
   }
 }
 

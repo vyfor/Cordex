@@ -11,4 +11,5 @@ class CordexConfiguration {
   var parsingErrorHandler: ((MessageCreateEvent, Command, ArgumentException) -> Unit)? = null
   var enableCommandSuggestions: Boolean = false
   var commandSuggestionAccuracy: DistanceAccuracy = DistanceAccuracy.STRICT
+  val interceptors: MutableMap<String, (MessageCreateEvent, Command) -> Boolean> = mutableMapOf()
 }

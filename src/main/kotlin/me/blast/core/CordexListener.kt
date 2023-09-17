@@ -24,10 +24,12 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
   private fun executeCommand(event: MessageCreateEvent, prefix: String) {
     val args = event.messageContent.substring(prefix.length).split(Regex("\\s+"))
     cordex.handler.getCommands()[args[0].lowercase()]?.apply {
-      if (guildOnly && !event.server.hasValue()) return@apply
+      if (guildOnly && !event.server.hasValue()) return
       
       try {
-        // Check for the user's permissions in the server.
+        // Run command interceptor, if provided
+        if (cordex.config.interceptors[name]?.invoke(event, this) == false) return
+        // Check for the user's permissions in the server
         if (
           permissions != null &&
           !(
@@ -35,7 +37,7 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
             event.server.get().getAllowedPermissions(event.messageAuthor.asUser().get()).containsAll(permissions)
            )
         ) event.message.reply(Embeds.missingPermissions(permissions))
-        // Check for the bot's permissions in the server.
+        // Check for the bot's permissions in the server
         if (
           selfPermissions != null &&
           !(
@@ -43,7 +45,7 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
             event.server.get().getAllowedPermissions(event.api.yourself).containsAll(selfPermissions)
            )
         ) event.message.reply(Embeds.missingSelfPermissions(selfPermissions))
-        
+        // User cooldown check
         if (
           userCooldown.isPositive() &&
           cordex.cooldownManager.isUserOnCooldown(name, event.messageAuthor.id, userCooldown.inWholeMilliseconds)
@@ -53,7 +55,7 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
             return
           }
         }
-        
+        // Channel cooldown check
         if (
           channelCooldown.isPositive() &&
           cordex.cooldownManager.isChannelOnCooldown(name, event.messageAuthor.id, channelCooldown.inWholeMilliseconds)
@@ -63,7 +65,7 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
             return
           }
         }
-        
+        // Server cooldown check
         if (
           serverCooldown.isPositive() &&
           cordex.cooldownManager.isServerOnCooldown(name, event.messageAuthor.id, serverCooldown.inWholeMilliseconds)
@@ -73,7 +75,9 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
             return
           }
         }
+        // Argument parsing and validation
         val parsedArgs = ArgumentsParser.parse(args.drop(1), options, event, guildOnly)
+        // Command execution
         Cordex.scope.launch {
           Arguments(parsedArgs).execute(
             Context(
@@ -94,7 +98,7 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
         Cordex.logger.error("Error occurred while executing command $name", e)
       }
     } ?: run {
-      // Let us agree, you wouldn't give a command a thirty character length name, or would you?
+      // Let us agree, you wouldn't give a command a thirty character name, or would you?
       if (cordex.config.enableCommandSuggestions && args[0].length <= 30) {
         event.message.reply(
           Embeds.commandNotFound(
