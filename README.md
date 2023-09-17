@@ -234,6 +234,32 @@ cordex("TOKEN") {
 ```
 Here, the parameter `DistanceAccuracy` represents the level of precision in matching input string with defined commands.
 
+### Pagination
+You can create a paginator that goes through a given list using the `List<T>.paginate` or` List<T>.paginateDefault` function.
+The `paginateDefault` function provides the same pagination features but with default handlers attached.
+
+The syntax is as follows:
+```kt
+List<T>.paginate(
+  channel = ctx.channel,
+  messageEvent = ctx.event,
+  itemsPerPage = 1,
+  onStart = { messageEvent, paginator, currentItems ->  
+    MessageBuilder().setContent(currentItems.joinToString("\n"))
+  },
+  onPagination = { message, paginator, currentItems ->
+    MessageUpdater(message).setContent(currentItems.joinToString("\n"))
+  },
+  onEmpty = {
+    MessageBuilder().setContent("No items found")
+  },
+  removeAfter = 2.minutes,
+  canClose = true // Adds a button to close the paginator
+)
+```
+
+> Take a look at [PaginationUtils.kt](src/main/kotlin/me/blast/utils/pagination/PaginationUtils.kt) to see a complete example.
+
 ### Extras
 Here are some additional features offered by **Cordex**:
 - Command permissions
