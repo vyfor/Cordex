@@ -99,13 +99,15 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener 
     } ?: run {
       // Let us agree, you wouldn't give a command a thirty character length name, or would you?
       if (cordex.config.enableCommandSuggestions && args[0].length <= 30) {
-        event.message.reply(
-          Embeds.commandNotFound(
-            args[0],
-            CommandUtils.findClosestCommands(args[0], cordex.handler.getCommands().keys, cordex.config.commandSuggestionAccuracy.maxDistance),
-            prefix
+        CommandUtils.findClosestCommands(args[0], cordex.handler.getCommands().keys, cordex.config.commandSuggestionAccuracy.maxDistance).let {
+          if(it.isNotEmpty()) event.message.reply(
+            Embeds.commandNotFound(
+              args[0],
+              it,
+              prefix
+            )
           )
-        )
+        }
       }
     }
   }
