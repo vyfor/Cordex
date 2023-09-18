@@ -235,7 +235,7 @@ cordex("TOKEN") {
 Here, the parameter `DistanceAccuracy` represents the level of precision in matching input string with defined commands.
 
 ### Pagination
-You can create a paginator that goes through a given list using the `List<T>.paginate` or` List<T>.paginateDefault` function.
+You can create a paginator that goes through a given list using the `List<T>.paginate` or `List<T>.paginateDefault` function.
 The `paginateDefault` function provides the same pagination features but with default handlers attached.
 
 The syntax is as follows:
@@ -283,9 +283,7 @@ cordex("TOKEN") {
     Java Emoji (JEmoji) is a lightweight fast emoji library for Java with the purpose to improve and ease working with emojis
 
 ## 📝 TODO
-- [ ] Add support for slash commands and attachments.
-- [ ] Provide support for other minor features:
-  - Slash command support
-  - `Attachment` argument type
-  - Command categorization
-  - Subcommands
+[ ] Slash command support
+[ ] `Attachment` argument type
+[ ] Command categorization
+[ ] Subcommands
