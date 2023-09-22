@@ -5,6 +5,7 @@ package me.blast.command.argument
 import me.blast.command.argument.builder.ArgumentType
 import me.blast.utils.Utils
 import org.javacord.api.event.message.MessageCreateEvent
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
 sealed class Argument<T>(copyFrom: Argument<*>? = null, val options: ArrayList<Argument<*>>) {
@@ -27,6 +28,8 @@ sealed class Argument<T>(copyFrom: Argument<*>? = null, val options: ArrayList<A
   var argumentDefaultValue: Any? = null
   var argumentRange: IntRange = 1..1
   var guildOnly = false
+  var argumentReturnValue: KClass<*> = String::class
+  var argumentChoices: Map<String, String>? = null
   
   init {
     if (copyFrom != null) {
@@ -39,6 +42,7 @@ sealed class Argument<T>(copyFrom: Argument<*>? = null, val options: ArrayList<A
       argumentIsOptional = copyFrom.argumentIsOptional
       argumentDefaultValue = copyFrom.argumentDefaultValue
       argumentRange = copyFrom.argumentRange
+      argumentReturnValue = copyFrom.argumentReturnValue
     }
   }
   
@@ -96,10 +100,11 @@ fun <T> InitialArg<T>.optional(): OptionalArg<T?> {
  * @param defaultValue The default value to use when the argument is absent.
  * @return An optional [Argument] with default value.
  */
-fun <T, R : Any> InitialArg<T>.optional(defaultValue: R): DefaultArg<R> {
+inline fun <T, reified R : Any> InitialArg<T>.optional(defaultValue: R): DefaultArg<R> {
   return DefaultArg<R>(this, options).apply {
     argumentIsOptional = true
     argumentDefaultValue = defaultValue
+    argumentReturnValue = R::class
   }
 }
 
@@ -109,10 +114,11 @@ fun <T, R : Any> InitialArg<T>.optional(defaultValue: R): DefaultArg<R> {
  * @param validator A function that validates and processes the argument value.
  * @return An optional [Argument] with nullable value and custom validation.
  */
-fun <T, R : Any> InitialArg<T>.optional(validator: String.() -> R): OptionalArg<R?> {
+inline fun <T, reified R : Any> InitialArg<T>.optional(noinline validator: String.() -> R): OptionalArg<R?> {
   return OptionalArg<R?>(this, options).apply {
     argumentIsOptional = true
     argumentValidator = validator
+    argumentReturnValue = R::class
   }
 }
 
@@ -123,11 +129,12 @@ fun <T, R : Any> InitialArg<T>.optional(validator: String.() -> R): OptionalArg<
  * @param validator A function that validates and processes the argument value.
  * @return An optional [Argument] with default value and custom validation.
  */
-fun <T, R : Any> InitialArg<T>.optional(default: R, validator: String.() -> R): DefaultArg<R> {
+inline fun <T, reified R : Any> InitialArg<T>.optional(default: R, noinline validator: String.() -> R): DefaultArg<R> {
   return DefaultArg<R>(this, options).apply {
     argumentIsOptional = true
     argumentDefaultValue = default
     argumentValidator = validator
+    argumentReturnValue = R::class
   }
 }
 
@@ -145,13 +152,14 @@ fun <T> MultipleArg<List<T>>.optional(): FinalizedArg<List<T>> {
 /**
  * Converts a multi-value argument into an optional argument with a default value.
  *
- * @param defaultValue The default value to use when the argument is absent.
+ * @param defaultValues An array of default values to use when the argument is absent.
  * @return An optional [Argument] with a default value that accepts multiple values.
  */
-fun <T, R : Any> MultipleArg<List<T>>.optional(defaultValue: R): FinalizedArg<List<R>> {
+inline fun <T, reified R : Any> MultipleArg<List<T>>.optional(vararg defaultValues: R): FinalizedArg<List<R>> {
   return FinalizedArg<List<R>>(this, options).apply {
     argumentIsOptional = true
-    argumentDefaultValue = defaultValue
+    argumentDefaultValue = listOf(*defaultValues)
+    argumentReturnValue = R::class
   }
 }
 
@@ -161,25 +169,27 @@ fun <T, R : Any> MultipleArg<List<T>>.optional(defaultValue: R): FinalizedArg<Li
  * @param validator A function that validates and processes the list of argument values.
  * @return An optional [Argument] with custom validation.
  */
-fun <T, R : Any> MultipleArg<List<T>>.optional(validator: List<String>.() -> R): FinalizedArg<R> {
+inline fun <T, reified R : Any> MultipleArg<List<T>>.optional(noinline validator: List<String>.() -> R): FinalizedArg<R> {
   return FinalizedArg<R>(this, options).apply {
     argumentIsOptional = true
     argumentListValidator = validator
+    argumentReturnValue = R::class
   }
 }
 
 /**
  * Converts a multi-value argument into an optional argument with a default value and custom list validation.
  *
- * @param defaultValue The default value to use when the argument is absent.
+ * @param defaultValues An array of default values to use when the argument is absent.
  * @param validator A function that validates and processes the list of argument values.
  * @return An optional [Argument] with a default value and custom validation.
  */
-fun <T, R : Any> MultipleArg<List<T>>.optional(defaultValue: R, validator: List<String>.() -> R): FinalizedArg<R> {
+inline fun <T, reified R : Any> MultipleArg<List<T>>.optional(vararg defaultValues: R, noinline validator: List<String>.() -> R): FinalizedArg<R> {
   return FinalizedArg<R>(this, options).apply {
     argumentIsOptional = true
-    argumentDefaultValue = defaultValue
+    argumentDefaultValue = listOf(*defaultValues)
     argumentListValidator = validator
+    argumentReturnValue = R::class
   }
 }
 
@@ -210,10 +220,11 @@ fun <T> InitialArg<T>.multiple(range: IntRange = 1..0): MultipleArg<List<T>> {
  * @param validator A function that validates and processes the list of argument values.
  * @return An [Argument] with multiple values and custom validation.
  */
-fun <T, R : Any> InitialArg<T>.multiple(range: IntRange = 1..0, validator: List<String>.() -> R): MultipleArg<R> {
+inline fun <T, reified R : Any> InitialArg<T>.multiple(range: IntRange = 1..0, noinline validator: List<String>.() -> R): MultipleArg<R> {
   return MultipleArg<R>(this, options).apply {
     argumentRange = range
     argumentListValidator = validator
+    argumentReturnValue = R::class
   }
 }
 
@@ -244,10 +255,11 @@ fun <T> OptionalArg<T?>.multiple(range: IntRange = 1..0): FinalizedArg<List<T>> 
  * @param validator A function that validates and processes the list of argument values.
  * @return An optional [Argument] with multiple and custom validation.
  */
-fun <T, R : Any> OptionalArg<T?>.multiple(range: IntRange = 1..0, validator: List<String>.() -> R): FinalizedArg<R> {
+inline fun <T, reified R : Any> OptionalArg<T?>.multiple(range: IntRange = 1..0, noinline validator: List<String>.() -> R): FinalizedArg<R> {
   return FinalizedArg<R>(this, options).apply {
     argumentRange = range
     argumentListValidator = validator
+    argumentReturnValue = R::class
   }
 }
 
@@ -278,9 +290,10 @@ fun <T> DefaultArg<T>.multiple(range: IntRange = 1..0): MultipleArg<List<T>> {
  * @param validator A function that validates and processes the list of argument values.
  * @return An optional [Argument] with a default value that accepts multiple values and custom validation.
  */
-fun <T, R : Any> DefaultArg<T>.multiple(range: IntRange = 1..0, validator: List<String>.() -> R): MultipleArg<R> {
+inline fun <T, reified R : Any> DefaultArg<T>.multiple(range: IntRange = 1..0, noinline validator: List<String>.() -> R): MultipleArg<R> {
   return MultipleArg<R>(this, options).apply {
     argumentRange = range
     argumentListValidator = validator
+    argumentReturnValue = R::class
   }
 }

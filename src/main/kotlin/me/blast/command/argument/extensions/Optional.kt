@@ -4,12 +4,13 @@ package me.blast.command.argument.extensions
 
 import me.blast.command.argument.Argument
 import me.blast.command.argument.OptionalArg
-import me.blast.utils.entity.Snowflake
 import me.blast.utils.Utils
 import me.blast.utils.Utils.hasValue
+import me.blast.utils.entity.Snowflake
 import me.blast.utils.extensions.throwUnless
 import net.fellbaum.jemoji.Emoji
 import net.fellbaum.jemoji.EmojiManager
+import org.javacord.api.entity.Mentionable
 import org.javacord.api.entity.channel.*
 import org.javacord.api.entity.emoji.CustomEmoji
 import org.javacord.api.entity.message.Message
@@ -18,13 +19,13 @@ import org.javacord.api.entity.user.User
 import org.javacord.api.util.DiscordRegexPattern
 import java.awt.Color
 import java.net.URL
-import kotlin.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*
 import kotlin.jvm.optionals.getOrElse
 import kotlin.jvm.optionals.getOrNull
 import kotlin.reflect.KClass
+import kotlin.time.Duration
 
 /**
  * Converts the argument value(s) to an integer.
@@ -36,6 +37,7 @@ import kotlin.reflect.KClass
 fun OptionalArg<*>.int(): Argument<Int?> {
   return (this as Argument<Int?>).apply {
     argumentValidator = { toInt() }
+    argumentReturnValue = Int::class
   }
 }
 
@@ -49,6 +51,7 @@ fun OptionalArg<*>.int(): Argument<Int?> {
 fun OptionalArg<*>.uInt(): Argument<UInt?> {
   return (this as Argument<UInt?>).apply {
     argumentValidator = { toUInt() }
+    argumentReturnValue = UInt::class
   }
 }
 
@@ -62,6 +65,7 @@ fun OptionalArg<*>.uInt(): Argument<UInt?> {
 fun OptionalArg<*>.long(): Argument<Long?> {
   return (this as Argument<Long?>).apply {
     argumentValidator = { toLong() }
+    argumentReturnValue = Long::class
   }
 }
 
@@ -75,6 +79,7 @@ fun OptionalArg<*>.long(): Argument<Long?> {
 fun OptionalArg<*>.uLong(): Argument<ULong?> {
   return (this as Argument<ULong?>).apply {
     argumentValidator = { toULong() }
+    argumentReturnValue = ULong::class
   }
 }
 
@@ -88,6 +93,7 @@ fun OptionalArg<*>.uLong(): Argument<ULong?> {
 fun OptionalArg<*>.float(): Argument<Float?> {
   return (this as Argument<Float?>).apply {
     argumentValidator = { toFloat() }
+    argumentReturnValue = Float::class
   }
 }
 
@@ -101,6 +107,7 @@ fun OptionalArg<*>.float(): Argument<Float?> {
 fun OptionalArg<*>.double(): Argument<Double?> {
   return (this as Argument<Double?>).apply {
     argumentValidator = { toDouble() }
+    argumentReturnValue = Double::class
   }
 }
 
@@ -145,6 +152,7 @@ fun OptionalArg<*>.user(searchMutualGuilds: Boolean = false): Argument<User?> {
         }
       }
     }
+    argumentReturnValue = User::class
   }
 }
 
@@ -171,6 +179,7 @@ fun OptionalArg<*>.channel(searchMutualGuilds: Boolean = false): Argument<Server
         }
       }
     }
+    argumentReturnValue = ServerChannel::class
   }
 }
 
@@ -205,6 +214,7 @@ inline fun <reified R : ServerChannel> OptionalArg<*>.channel(vararg types: KCla
         throw IllegalArgumentException()
       }
     }
+    argumentReturnValue = ServerChannel::class
   }
 }
 
@@ -231,6 +241,7 @@ fun OptionalArg<*>.textChannel(searchMutualGuilds: Boolean = false): Argument<Se
         }
       }
     }
+    argumentReturnValue = ServerTextChannel::class
   }
 }
 
@@ -257,6 +268,7 @@ fun OptionalArg<*>.voiceChannel(searchMutualGuilds: Boolean = false): Argument<S
         }
       }
     }
+    argumentReturnValue = ServerVoiceChannel::class
   }
 }
 
@@ -283,6 +295,7 @@ fun OptionalArg<*>.threadChannel(searchMutualGuilds: Boolean = false): Argument<
         }
       }
     }
+    argumentReturnValue = ServerThreadChannel::class
   }
 }
 
@@ -309,6 +322,7 @@ fun OptionalArg<*>.stageChannel(searchMutualGuilds: Boolean = false): Argument<S
         }
       }
     }
+    argumentReturnValue = ServerStageVoiceChannel::class
   }
 }
 
@@ -335,6 +349,7 @@ fun OptionalArg<*>.forumChannel(searchMutualGuilds: Boolean = false): Argument<S
         }
       }
     }
+    argumentReturnValue = ServerForumChannel::class
   }
 }
 
@@ -361,6 +376,7 @@ fun OptionalArg<*>.category(searchMutualGuilds: Boolean = false): Argument<Chann
         }
       }
     }
+    argumentReturnValue = ChannelCategory::class
   }
 }
 
@@ -387,6 +403,7 @@ fun OptionalArg<*>.role(searchMutualGuilds: Boolean = false): Argument<Role?> {
         }
       }
     }
+    argumentReturnValue = Role::class
   }
 }
 
@@ -426,6 +443,37 @@ fun OptionalArg<*>.message(searchMutualGuilds: Boolean = false, includePrivateCh
         }
       }
     }
+    argumentReturnValue = Message::class
+  }
+}
+
+/**
+ * Retrieves a [Mentionable] based on the argument value(s).
+ *
+ * Use [mentionables] to convert each value separately.
+ *
+ * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
+ * @return An Argument containing the retrieved nullable [Mentionable] value.
+ */
+fun OptionalArg<*>.mentionable(searchMutualGuilds: Boolean = false): Argument<Mentionable?> {
+  return (this as Argument<Mentionable?>).apply {
+    argumentValidator = {
+      val matchResult = DiscordRegexPattern.USER_MENTION.toRegex().matchEntire(this)
+                        ?: DiscordRegexPattern.CHANNEL_MENTION.toRegex().matchEntire(this)
+                        ?: DiscordRegexPattern.ROLE_MENTION.toRegex().matchEntire(this)
+                        ?: throw IllegalArgumentException()
+      
+      argumentEvent.server.get().getMemberById(matchResult.groups["id"]!!.value).getOrNull()
+      ?: argumentEvent.server.get().getChannelById(matchResult.groups["id"]!!.value).getOrNull()
+      ?: argumentEvent.server.get().getRoleById(matchResult.groups["id"]!!.value).getOrNull()
+      ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()){
+        argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+          server.getMemberById(matchResult.groups["id"]!!.value).getOrNull()
+          ?: server.getChannelById(matchResult.groups["id"]!!.value).getOrNull()
+          ?: server.getRoleById(matchResult.groups["id"]!!.value).getOrNull()
+        }
+      }
+    }
   }
 }
 
@@ -447,6 +495,7 @@ fun OptionalArg<*>.customEmoji(searchMutualGuilds: Boolean = false): Argument<Cu
         }
       }
     }
+    argumentReturnValue = CustomEmoji::class
   }
 }
 
@@ -462,6 +511,7 @@ fun OptionalArg<*>.snowflake(): Argument<Snowflake?> {
     argumentValidator = {
       Snowflake(toLong().takeIf { it > 0 }!!)
     }
+    argumentReturnValue = Snowflake::class
   }
 }
 
@@ -475,6 +525,7 @@ fun OptionalArg<*>.snowflake(): Argument<Snowflake?> {
 fun OptionalArg<*>.url(): Argument<URL?> {
   return (this as Argument<URL?>).apply {
     argumentValidator = { URL(this) }
+    argumentReturnValue = URL::class
   }
 }
 
@@ -490,6 +541,7 @@ fun OptionalArg<*>.duration(): Argument<Duration?> {
     argumentValidator = {
       Utils.parseDuration(this) ?: throw IllegalArgumentException()
     }
+    argumentReturnValue = Duration::class
   }
 }
 
@@ -506,6 +558,7 @@ fun OptionalArg<*>.date(locale: Locale = Locale.ENGLISH): Argument<LocalDate?> {
     argumentValidator = {
       Utils.parseDate(this, locale)?.toLocalDate() ?: throw IllegalArgumentException()
     }
+    argumentReturnValue = LocalDate::class
   }
 }
 
@@ -522,6 +575,7 @@ fun OptionalArg<*>.dateTime(locale: Locale = Locale.ENGLISH): Argument<LocalDate
     argumentValidator = {
       Utils.parseDate(this, locale) ?: throw IllegalArgumentException()
     }
+    argumentReturnValue = LocalDateTime::class
   }
 }
 
@@ -537,6 +591,7 @@ fun OptionalArg<*>.color(): Argument<Color?> {
     argumentValidator = {
       Color::class.java.getField(this)[null] as? Color ?: Color.decode(this)
     }
+    argumentReturnValue = Color::class
   }
 }
 
@@ -552,6 +607,7 @@ fun OptionalArg<*>.unicodeEmoji(): Argument<Emoji?> {
     argumentValidator = {
       EmojiManager.getEmoji(this).get()
     }
+    argumentReturnValue = Emoji::class
   }
 }
 
@@ -567,6 +623,7 @@ inline fun <reified T : Enum<T>> OptionalArg<*>.enum(): Argument<T?> {
     argumentValidator = {
       enumValueOf<T>(uppercase().replace(" ", "_"))
     }
+    argumentReturnValue = T::class
   }
 }
 
@@ -580,9 +637,13 @@ inline fun <reified T : Enum<T>> OptionalArg<*>.enum(): Argument<T?> {
  */
 fun <T> OptionalArg<*>.map(values: Map<String, T>, ignoreCase: Boolean = false): Argument<T?> {
   return (this as Argument<T?>).apply {
+    argumentChoices = values.mapValues {
+      it.value.toString()
+    }
     argumentValidator = {
       values[if(ignoreCase) lowercase() else this]!!
     }
+    argumentReturnValue = Map::class
   }
 }
 
@@ -596,8 +657,12 @@ fun <T> OptionalArg<*>.map(values: Map<String, T>, ignoreCase: Boolean = false):
  */
 fun <T> OptionalArg<*>.map(vararg values: Pair<String, T>, ignoreCase: Boolean = false): Argument<T?> {
   return (this as Argument<T?>).apply {
+    argumentChoices = values.associate {
+      it.first to it.second.toString()
+    }
     argumentValidator = {
       mapOf(*values)[if(ignoreCase) lowercase() else this]!!
     }
+    argumentReturnValue = Map::class
   }
 }

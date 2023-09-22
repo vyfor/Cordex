@@ -10,6 +10,7 @@ import me.blast.utils.Utils.hasValue
 import me.blast.utils.extensions.throwUnless
 import net.fellbaum.jemoji.Emoji
 import net.fellbaum.jemoji.EmojiManager
+import org.javacord.api.entity.Mentionable
 import org.javacord.api.entity.channel.*
 import org.javacord.api.entity.emoji.CustomEmoji
 import org.javacord.api.entity.message.Message
@@ -40,6 +41,7 @@ fun FinalizedArg<*>.int(): Argument<Int?> {
         it.toInt()
       }
     }
+    argumentReturnValue = Int::class
   }
 }
 
@@ -57,6 +59,7 @@ fun FinalizedArg<*>.uInt(): Argument<UInt?> {
         it.toUInt()
       }
     }
+    argumentReturnValue = UInt::class
   }
 }
 
@@ -74,6 +77,7 @@ fun FinalizedArg<*>.long(): Argument<Long?> {
         it.toLong()
       }
     }
+    argumentReturnValue = Long::class
   }
 }
 
@@ -91,6 +95,7 @@ fun FinalizedArg<*>.uLong(): Argument<ULong?> {
         it.toULong()
       }
     }
+    argumentReturnValue = ULong::class
   }
 }
 
@@ -108,6 +113,7 @@ fun FinalizedArg<*>.float(): Argument<Float?> {
         it.toFloat()
       }
     }
+    argumentReturnValue = Float::class
   }
 }
 
@@ -125,6 +131,7 @@ fun FinalizedArg<*>.double(): Argument<Double?> {
         it.toDouble()
       }
     }
+    argumentReturnValue = Double::class
   }
 }
 
@@ -171,6 +178,7 @@ fun FinalizedArg<*>.user(searchMutualGuilds: Boolean = false): Argument<User?> {
         }
       }
     }
+    argumentReturnValue = User::class
   }
 }
 
@@ -199,6 +207,7 @@ fun FinalizedArg<*>.channel(searchMutualGuilds: Boolean = false): Argument<Serve
         }
       }
     }
+    argumentReturnValue = ServerChannel::class
   }
 }
 
@@ -235,6 +244,7 @@ inline fun <reified R : ServerChannel> FinalizedArg<*>.channel(vararg types: KCl
         }
       }
     }
+    argumentReturnValue = ServerChannel::class
   }
 }
 
@@ -263,6 +273,7 @@ fun FinalizedArg<*>.textChannel(searchMutualGuilds: Boolean = false): Argument<S
         }
       }
     }
+    argumentReturnValue = ServerTextChannel::class
   }
 }
 
@@ -291,6 +302,7 @@ fun FinalizedArg<*>.voiceChannel(searchMutualGuilds: Boolean = false): Argument<
         }
       }
     }
+    argumentReturnValue = ServerVoiceChannel::class
   }
 }
 
@@ -319,6 +331,7 @@ fun FinalizedArg<*>.threadChannel(searchMutualGuilds: Boolean = false): Argument
         }
       }
     }
+    argumentReturnValue = ServerThreadChannel::class
   }
 }
 
@@ -347,6 +360,7 @@ fun FinalizedArg<*>.stageChannel(searchMutualGuilds: Boolean = false): Argument<
         }
       }
     }
+    argumentReturnValue = ServerStageVoiceChannel::class
   }
 }
 
@@ -375,6 +389,7 @@ fun FinalizedArg<*>.forumChannel(searchMutualGuilds: Boolean = false): Argument<
         }
       }
     }
+    argumentReturnValue = ServerForumChannel::class
   }
 }
 
@@ -403,6 +418,7 @@ fun FinalizedArg<*>.category(searchMutualGuilds: Boolean = false): Argument<Chan
         }
       }
     }
+    argumentReturnValue = ChannelCategory::class
   }
 }
 
@@ -431,6 +447,7 @@ fun FinalizedArg<*>.role(searchMutualGuilds: Boolean = false): Argument<Role?> {
         }
       }
     }
+    argumentReturnValue = Role::class
   }
 }
 
@@ -472,6 +489,39 @@ fun FinalizedArg<*>.message(searchMutualGuilds: Boolean = false, includePrivateC
         }
       }
     }
+    argumentReturnValue = Message::class
+  }
+}
+
+/**
+ * Retrieves a [Mentionable] based on the argument value(s).
+ *
+ * Use [mentionables] to convert each value separately.
+ *
+ * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
+ * @return An Argument containing the retrieved nullable [Mentionable] value.
+ */
+fun FinalizedArg<*>.mentionable(searchMutualGuilds: Boolean = false): Argument<Mentionable?> {
+  return (this as Argument<Mentionable?>).apply {
+    argumentListValidator = {
+      map {
+        val matchResult = DiscordRegexPattern.USER_MENTION.toRegex().matchEntire(it)
+                          ?: DiscordRegexPattern.CHANNEL_MENTION.toRegex().matchEntire(it)
+                          ?: DiscordRegexPattern.ROLE_MENTION.toRegex().matchEntire(it)
+                          ?: throw IllegalArgumentException()
+        
+        argumentEvent.server.get().getMemberById(matchResult.groups["id"]!!.value).getOrNull()
+        ?: argumentEvent.server.get().getChannelById(matchResult.groups["id"]!!.value).getOrNull()
+        ?: argumentEvent.server.get().getRoleById(matchResult.groups["id"]!!.value).getOrNull()
+        ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()){
+          argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+            server.getMemberById(matchResult.groups["id"]!!.value).getOrNull()
+            ?: server.getChannelById(matchResult.groups["id"]!!.value).getOrNull()
+            ?: server.getRoleById(matchResult.groups["id"]!!.value).getOrNull()
+          }
+        }
+      }
+    }
   }
 }
 
@@ -495,6 +545,7 @@ fun FinalizedArg<*>.customEmoji(searchMutualGuilds: Boolean = false): Argument<C
         }
       }
     }
+    argumentReturnValue = CustomEmoji::class
   }
 }
 
@@ -512,6 +563,7 @@ fun FinalizedArg<*>.snowflake(): Argument<Snowflake?> {
         Snowflake(toLong().takeIf { it > 0 }!!)
       }
     }
+    argumentReturnValue = Snowflake::class
   }
 }
 
@@ -529,6 +581,7 @@ fun FinalizedArg<*>.url(): Argument<URL?> {
         URL(it)
       }
     }
+    argumentReturnValue = URL::class
   }
 }
 
@@ -546,6 +599,7 @@ fun FinalizedArg<*>.duration(): Argument<Duration?> {
         Utils.parseDuration(it) ?: throw IllegalArgumentException()
       }
     }
+    argumentReturnValue = Duration::class
   }
 }
 
@@ -564,6 +618,7 @@ fun FinalizedArg<*>.date(locale: Locale = Locale.ENGLISH): Argument<LocalDate?> 
         Utils.parseDate(it, locale)?.toLocalDate() ?: throw IllegalArgumentException()
       }
     }
+    argumentReturnValue = LocalDate::class
   }
 }
 
@@ -582,6 +637,7 @@ fun FinalizedArg<*>.dateTime(locale: Locale = Locale.ENGLISH): Argument<LocalDat
         Utils.parseDate(it, locale) ?: throw IllegalArgumentException()
       }
     }
+    argumentReturnValue = LocalDateTime::class
   }
 }
 
@@ -599,6 +655,7 @@ fun FinalizedArg<*>.color(): Argument<Color?> {
         Color::class.java.getField(it)[null] as? Color ?: Color.decode(it)
       }
     }
+    argumentReturnValue = Color::class
   }
 }
 
@@ -616,6 +673,7 @@ fun FinalizedArg<*>.unicodeEmoji(): Argument<Emoji?> {
         EmojiManager.getEmoji(it).get()
       }
     }
+    argumentReturnValue = Emoji::class
   }
 }
 
@@ -633,6 +691,7 @@ inline fun <reified T : Enum<T>> FinalizedArg<*>.enum(): Argument<T?> {
         enumValueOf<T>(it.uppercase().replace(" ", "_"))
       }
     }
+    argumentReturnValue = T::class
   }
 }
 
@@ -646,9 +705,13 @@ inline fun <reified T : Enum<T>> FinalizedArg<*>.enum(): Argument<T?> {
  */
 fun <T> FinalizedArg<*>.map(values: Map<String, T>, ignoreCase: Boolean = false): Argument<T?> {
   return (this as Argument<T?>).apply {
+    argumentChoices = values.mapValues {
+      it.value.toString()
+    }
     argumentValidator = {
       values[if(ignoreCase) lowercase() else this]!!
     }
+    argumentReturnValue = Map::class
   }
 }
 
@@ -661,9 +724,13 @@ fun <T> FinalizedArg<*>.map(values: Map<String, T>, ignoreCase: Boolean = false)
  * @return An Argument containing the retrieved nullable [T] value.
  */
 fun <T> FinalizedArg<*>.map(vararg values: Pair<String, T>, ignoreCase: Boolean = false): Argument<T?> {
+  argumentChoices = values.associate {
+    it.first to it.second.toString()
+  }
   return (this as Argument<T?>).apply {
     argumentValidator = {
       mapOf(*values)[if(ignoreCase) lowercase() else this]!!
     }
+    argumentReturnValue = Map::class
   }
 }

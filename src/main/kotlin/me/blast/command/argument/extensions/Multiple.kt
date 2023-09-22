@@ -10,6 +10,7 @@ import me.blast.utils.Utils.hasValue
 import me.blast.utils.extensions.throwUnless
 import net.fellbaum.jemoji.Emoji
 import net.fellbaum.jemoji.EmojiManager
+import org.javacord.api.entity.Mentionable
 import org.javacord.api.entity.channel.*
 import org.javacord.api.entity.emoji.CustomEmoji
 import org.javacord.api.entity.message.Message
@@ -40,6 +41,7 @@ fun Multiple<*>.ints(): Argument<List<Int>> {
         it.toInt()
       }
     }
+    argumentReturnValue = Int::class
   }
 }
 
@@ -57,6 +59,7 @@ fun Multiple<*>.uInts(): Argument<List<UInt>> {
         it.toUInt()
       }
     }
+    argumentReturnValue = UInt::class
   }
 }
 
@@ -74,6 +77,7 @@ fun Multiple<*>.longs(): Argument<List<Long>> {
         it.toLong()
       }
     }
+    argumentReturnValue = Long::class
   }
 }
 
@@ -91,6 +95,7 @@ fun Multiple<*>.uLongs(): Argument<List<ULong>> {
         it.toULong()
       }
     }
+    argumentReturnValue = ULong::class
   }
 }
 
@@ -108,6 +113,7 @@ fun Multiple<*>.floats(): Argument<List<Float>> {
         it.toFloat()
       }
     }
+    argumentReturnValue = Float::class
   }
 }
 
@@ -125,6 +131,7 @@ fun Multiple<*>.doubles(): Argument<List<Double>> {
         it.toDouble()
       }
     }
+    argumentReturnValue = Double::class
   }
 }
 
@@ -171,6 +178,7 @@ fun Multiple<*>.users(searchMutualGuilds: Boolean = false): Argument<List<User>>
         }
       }
     }
+    argumentReturnValue = User::class
   }
 }
 
@@ -199,6 +207,7 @@ fun Multiple<*>.channels(searchMutualGuilds: Boolean = false): Argument<List<Ser
         }
       }
     }
+    argumentReturnValue = ServerChannel::class
   }
 }
 
@@ -235,6 +244,7 @@ inline fun <reified R : ServerChannel> Multiple<*>.channels(vararg types: KClass
         }
       }
     }
+    argumentReturnValue = ServerChannel::class
   }
 }
 
@@ -263,6 +273,7 @@ fun Multiple<*>.textChannels(searchMutualGuilds: Boolean = false): Argument<List
         }
       }
     }
+    argumentReturnValue = ServerTextChannel::class
   }
 }
 
@@ -291,6 +302,7 @@ fun Multiple<*>.voiceChannels(searchMutualGuilds: Boolean = false): Argument<Lis
         }
       }
     }
+    argumentReturnValue = ServerVoiceChannel::class
   }
 }
 
@@ -319,6 +331,7 @@ fun Multiple<*>.threadChannels(searchMutualGuilds: Boolean = false): Argument<Li
         }
       }
     }
+    argumentReturnValue = ServerThreadChannel::class
   }
 }
 
@@ -347,6 +360,7 @@ fun Multiple<*>.stageChannels(searchMutualGuilds: Boolean = false): Argument<Lis
         }
       }
     }
+    argumentReturnValue = ServerStageVoiceChannel::class
   }
 }
 
@@ -375,6 +389,7 @@ fun Multiple<*>.forumChannels(searchMutualGuilds: Boolean = false): Argument<Lis
         }
       }
     }
+    argumentReturnValue = ServerForumChannel::class
   }
 }
 
@@ -403,6 +418,7 @@ fun Multiple<*>.categories(searchMutualGuilds: Boolean = false): Argument<List<C
         }
       }
     }
+    argumentReturnValue = ChannelCategory::class
   }
 }
 
@@ -431,6 +447,7 @@ fun Multiple<*>.roles(searchMutualGuilds: Boolean = false): Argument<List<Role>>
         }
       }
     }
+    argumentReturnValue = Role::class
   }
 }
 
@@ -472,6 +489,39 @@ fun Multiple<*>.messages(searchMutualGuilds: Boolean = false, includePrivateChan
         }
       }
     }
+    argumentReturnValue = Message::class
+  }
+}
+
+/**
+ * Retrieves [Mentionable]s based on the argument values.
+ *
+ * Use [mentionable] to convert multiple values into a single one.
+ *
+ * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
+ * @return An Argument containing a list with retrieved [Mentionable] values.
+ */
+fun Multiple<*>.mentionables(searchMutualGuilds: Boolean = false): Argument<List<Mentionable>> {
+  return (this as Argument<List<Mentionable>>).apply {
+    argumentListValidator = {
+      map {
+        val matchResult = DiscordRegexPattern.USER_MENTION.toRegex().matchEntire(it)
+                          ?: DiscordRegexPattern.CHANNEL_MENTION.toRegex().matchEntire(it)
+                          ?: DiscordRegexPattern.ROLE_MENTION.toRegex().matchEntire(it)
+                          ?: throw IllegalArgumentException()
+        
+        argumentEvent.server.get().getMemberById(matchResult.groups["id"]!!.value).getOrNull()
+        ?: argumentEvent.server.get().getChannelById(matchResult.groups["id"]!!.value).getOrNull()
+        ?: argumentEvent.server.get().getRoleById(matchResult.groups["id"]!!.value).getOrNull()
+        ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()){
+          argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+            server.getMemberById(matchResult.groups["id"]!!.value).getOrNull()
+            ?: server.getChannelById(matchResult.groups["id"]!!.value).getOrNull()
+            ?: server.getRoleById(matchResult.groups["id"]!!.value).getOrNull()
+          }
+        }
+      }
+    }
   }
 }
 
@@ -495,6 +545,7 @@ fun Multiple<*>.customEmojis(searchMutualGuilds: Boolean = false): Argument<List
         }
       }
     }
+    argumentReturnValue = CustomEmoji::class
   }
 }
 
@@ -512,6 +563,7 @@ fun Multiple<*>.snowflakes(): Argument<List<Snowflake>> {
         Snowflake(toLong().takeIf { it > 0 }!!)
       }
     }
+    argumentReturnValue = Snowflake::class
   }
 }
 
@@ -529,6 +581,7 @@ fun Multiple<*>.urls(): Argument<List<URL>> {
         URL(it)
       }
     }
+    argumentReturnValue = URL::class
   }
 }
 
@@ -546,6 +599,7 @@ fun Multiple<*>.durations(): Argument<List<Duration>> {
         Utils.parseDuration(it) ?: throw IllegalArgumentException()
       }
     }
+    argumentReturnValue = Duration::class
   }
 }
 
@@ -564,6 +618,7 @@ fun Multiple<*>.dates(locale: Locale = Locale.ENGLISH): Argument<List<LocalDate>
         Utils.parseDate(it, locale)?.toLocalDate() ?: throw IllegalArgumentException()
       }
     }
+    argumentReturnValue = LocalDate::class
   }
 }
 
@@ -582,6 +637,7 @@ fun Multiple<*>.dateTimes(locale: Locale = Locale.ENGLISH): Argument<List<LocalD
         Utils.parseDate(it, locale) ?: throw IllegalArgumentException()
       }
     }
+    argumentReturnValue = LocalDateTime::class
   }
 }
 
@@ -599,6 +655,7 @@ fun Multiple<*>.colors(): Argument<List<Color>> {
         Color::class.java.getField(it)[null] as? Color ?: Color.decode(it)
       }
     }
+    argumentReturnValue = Color::class
   }
 }
 
@@ -616,6 +673,7 @@ fun Multiple<*>.unicodeEmojis(): Argument<List<Emoji>> {
         EmojiManager.getEmoji(it).get()
       }
     }
+    argumentReturnValue = Emoji::class
   }
 }
 
@@ -633,6 +691,7 @@ inline fun <reified T : Enum<T>> Multiple<*>.enums(): Argument<T> {
         enumValueOf<T>(it.uppercase().replace(" ", "_"))
       }
     }
+    argumentReturnValue = T::class
   }
 }
 
@@ -646,11 +705,15 @@ inline fun <reified T : Enum<T>> Multiple<*>.enums(): Argument<T> {
  */
 fun <T> Multiple<*>.maps(values: Map<String, T>, ignoreCase: Boolean = false): Argument<List<T>> {
   return (this as Argument<List<T>>).apply {
+    argumentChoices = values.mapValues {
+      it.value.toString()
+    }
     argumentListValidator = {
       map {
         values[if(ignoreCase) it.lowercase() else it]!!
       }
     }
+    argumentReturnValue = Map::class
   }
 }
 
@@ -664,11 +727,15 @@ fun <T> Multiple<*>.maps(values: Map<String, T>, ignoreCase: Boolean = false): A
  */
 fun <T> Multiple<*>.maps(vararg values: Pair<String, T>, ignoreCase: Boolean = false): Argument<List<T>> {
   return (this as Argument<List<T>>).apply {
+    argumentChoices = values.associate {
+      it.first to it.second.toString()
+    }
     argumentListValidator = {
       map {
         mapOf(*values)[if(ignoreCase) it.lowercase() else it]!!
       }
     }
+    argumentReturnValue = Map::class
   }
 }
 
