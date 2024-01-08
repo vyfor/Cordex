@@ -1,37 +1,67 @@
+@file:Suppress("MemberVisibilityCanBePrivate", "unused")
+
 package me.blast.core
 
-import me.blast.command.Command
+import me.blast.command.BaseCommand
+import me.blast.command.text.TextCommand
+import me.blast.command.slash.SlashCommand
 import me.blast.utils.Utils
 import kotlin.system.measureTimeMillis
 
 class CordexCommands {
-  private val commands = mutableMapOf<String, Command>()
+  private val textCommands = mutableMapOf<String, TextCommand>()
+  private val slashCommands = mutableMapOf<String, SlashCommand>()
   
   /**
-   * Get a map containing the registered commands.
+   * Get a map containing the registered text commands.
    *
    * @return A map of command names to their corresponding instances.
    */
-  fun getCommands() = commands.toMap()
+  fun getTextCommands() = textCommands.toMap()
   
   /**
-   * Register a command.
+   * Get a map containing the registered slash commands.
+   *
+   * @return A map of command names to their corresponding instances.
+   */
+  fun getSlashCommands() = slashCommands.toMap()
+  
+  /**
+   * Register a text command.
    *
    * @param command The command to register.
    */
-  fun register(command: Command) {
-    commands[command.name] = command
-    command.aliases?.forEach { commands[it] = command }
+  fun register(command: TextCommand) {
+    textCommands[command.name] = command
+    command.aliases?.forEach { textCommands[it] = command }
   }
   
   /**
-   * Unregister a command.
+   * Unregister a text command.
    *
    * @param command The command to unregister.
    */
-  fun unregister(command: Command) {
-    commands.remove(command.name)
-    command.aliases?.forEach { commands.remove(it) }
+  fun unregister(command: TextCommand) {
+    textCommands.remove(command.name)
+    command.aliases?.forEach { textCommands.remove(it) }
+  }
+  
+  /**
+   * Register a slash command.
+   *
+   * @param command The command to register.
+   */
+  fun register(command: SlashCommand) {
+    slashCommands[command.name] = command
+  }
+  
+  /**
+   * Unregister a slash command.
+   *
+   * @param command The command to unregister.
+   */
+  fun unregister(command: SlashCommand) {
+    slashCommands.remove(command.name)
   }
   
   /**
@@ -39,17 +69,29 @@ class CordexCommands {
    *
    * @param packageName The package to search for command classes.
    * *If not provided, the function will scan all source
-   * code files for applicable classes extending [Command] class.*
+   * code files for applicable classes implementing the [BaseCommand] interface.*
    */
   fun load(packageName: String = "") {
     val millis = measureTimeMillis {
       Utils.loadClasses(packageName).filter {
-        it.superclass == Command::class.java
+        BaseCommand::class.java.isAssignableFrom(it)
       }.forEach { command ->
         try {
           val constructor = command.getDeclaredConstructor()
           constructor.isAccessible = true
-          register(constructor.newInstance() as Command)
+          when (val instance = constructor.newInstance()) {
+            is SlashCommand -> {
+              register(instance)
+            }
+            
+            is TextCommand -> {
+              register(instance)
+            }
+            
+            else -> {
+              Cordex.logger.error("Class ${instance.javaClass.name} does not extend the right class.")
+            }
+          }
         } catch (e: Exception) {
           Cordex.logger.error("Could not load class ${command.name}!", e.cause)
         }
@@ -59,16 +101,30 @@ class CordexCommands {
   }
   
   /**
-   * Register a command.
+   * Register a text command.
    *
    * @receiver The command to register.
    */
-  operator fun Command.unaryPlus() = register(this)
+  operator fun TextCommand.unaryPlus() = register(this)
   
   /**
-   * Unregister a command.
+   * Unregister a text command.
    *
    * @receiver The command to unregister.
    */
-  operator fun Command.unaryMinus() = unregister(this)
+  operator fun TextCommand.unaryMinus() = unregister(this)
+  
+  /**
+   * Register a slash command.
+   *
+   * @receiver The command to register.
+   */
+  operator fun SlashCommand.unaryPlus() = register(this)
+  
+  /**
+   * Unregister a slash command.
+   *
+   * @receiver The command to unregister.
+   */
+  operator fun SlashCommand.unaryMinus() = unregister(this)
 }

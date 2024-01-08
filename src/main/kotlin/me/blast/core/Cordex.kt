@@ -7,28 +7,28 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.future.await
-import me.blast.command.Command
 import me.blast.parser.exception.ArgumentException
+import me.blast.utils.command.CommandUtils
 import me.blast.utils.command.suggestions.DistanceAccuracy
 import me.blast.utils.cooldown.Cooldown
 import me.blast.utils.cooldown.CooldownManager
 import me.blast.utils.cooldown.CooldownType
+import me.blast.utils.event.CommandEvent
 import org.javacord.api.DiscordApi
 import org.javacord.api.DiscordApiBuilder
-import org.javacord.api.event.message.MessageCreateEvent
 import org.slf4j.LoggerFactory
 
 object Cordex {
   const val VERSION = "0.3.2"
-  val logger = LoggerFactory.getLogger(Cordex::class.java)
+  val logger = LoggerFactory.getLogger(Cordex::class.java)!!
   val scope = CoroutineScope(Dispatchers.Default)
 }
 
 class CordexBuilder(token: String) {
-  val config = CordexConfiguration()
+  internal val config = CordexConfiguration()
+  internal val cooldownManager = CooldownManager()
+  val api = DiscordApiBuilder().setToken(token)!!
   val handler = CordexCommands()
-  val cooldownManager = CooldownManager()
-  val api = DiscordApiBuilder().setToken(token)
   
   /**
    * Set a function for determining the command prefix.
@@ -75,7 +75,7 @@ class CordexBuilder(token: String) {
    *
    * @param block The block of code to execute when an exception occurs.
    */
-  fun onError(block: (MessageCreateEvent, Command, Exception) -> Unit) {
+  fun onError(block: (CommandEvent, Exception) -> Unit) {
     config.errorHandler = block
   }
   
@@ -87,7 +87,7 @@ class CordexBuilder(token: String) {
    *
    * @see [ArgumentException]
    */
-  fun onParseError(block: (MessageCreateEvent, Command, ArgumentException) -> Unit) {
+  fun onParseError(block: (CommandEvent, ArgumentException) -> Unit) {
     config.parsingErrorHandler = block
   }
   
@@ -96,7 +96,7 @@ class CordexBuilder(token: String) {
    *
    * @param block The block of code to execute when a user hits the cooldown.
    */
-  fun onCooldown(block: (MessageCreateEvent, Command, Cooldown, CooldownType) -> Unit) {
+  fun onCooldown(block: (CommandEvent, Cooldown, CooldownType) -> Unit) {
     config.cooldownHandler = block
   }
   
@@ -107,7 +107,7 @@ class CordexBuilder(token: String) {
    * @param block The block of code to run.
    * Return true to continue the execution of the command, false otherwise.
    */
-  fun intercept(command: String, block: (MessageCreateEvent, Command) -> Boolean) {
+  fun intercept(command: String, block: (CommandEvent) -> Boolean) {
     config.interceptors[command.lowercase()] = block
   }
   
@@ -128,7 +128,7 @@ class CordexBuilder(token: String) {
  * @param block The configuration block for [CordexBuilder].
  * @return A [Flow] emitting [DiscordApi] instances for each shard.
  */
-suspend inline fun cordex(
+inline fun cordex(
   token: String,
   crossinline block: (CordexBuilder.() -> Unit),
 ): Flow<DiscordApi> = flow {
@@ -137,6 +137,12 @@ suspend inline fun cordex(
     api.setAllIntents().setWaitForUsersOnStartup(true).loginAllShards().map {
       emit(it.await().apply {
         addListener(CordexListener(this@run))
+        CommandUtils.generateSlashCommands(handler.getSlashCommands().values).let { (globalCommands, serverCommands) ->
+          bulkOverwriteGlobalApplicationCommands(globalCommands)
+          serverCommands.forEach { (guildId, slashCommands) ->
+            bulkOverwriteServerApplicationCommands(guildId, slashCommands)
+          }
+        }
       })
     }
   }

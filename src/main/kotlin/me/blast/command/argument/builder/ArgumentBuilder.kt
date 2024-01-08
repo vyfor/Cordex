@@ -17,13 +17,14 @@ abstract class ArgumentBuilder(open val guildOnly: Boolean) {
     }
   }
   
-  inline fun <reified T> option(description: String? = null, fullName: String? = null, shortName: String? = null, noinline validator: String.() -> T): InitialArg<T> {
+  inline fun <reified T : Any> option(description: String? = null, fullName: String? = null, shortName: String? = null, noinline validator: String.() -> T): InitialArg<T> {
     return InitialArg<T>(options).apply {
       argumentType = ArgumentType.OPTION
       if (description != null) argumentDescription = description
       if (fullName != null) argumentName = fullName
       argumentShortName = shortName
       argumentValidator = validator
+      argumentReturnValue = T::class
     }
   }
   
@@ -33,6 +34,7 @@ abstract class ArgumentBuilder(open val guildOnly: Boolean) {
       if (description != null) argumentDescription = description
       if (fullName != null) argumentName = fullName
       argumentShortName = shortName
+      argumentReturnValue = Boolean::class
     }
   }
   
@@ -50,6 +52,7 @@ abstract class ArgumentBuilder(open val guildOnly: Boolean) {
       if (description != null) argumentDescription = description
       if (fullName != null) argumentName = fullName
       argumentValidator = validator
+      argumentReturnValue = T::class
     }
   }
 }

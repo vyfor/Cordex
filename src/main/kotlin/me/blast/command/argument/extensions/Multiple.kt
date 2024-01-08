@@ -10,6 +10,7 @@ import me.blast.utils.Utils.hasValue
 import me.blast.utils.extensions.throwUnless
 import net.fellbaum.jemoji.Emoji
 import net.fellbaum.jemoji.EmojiManager
+import org.javacord.api.entity.Mentionable
 import org.javacord.api.entity.channel.*
 import org.javacord.api.entity.emoji.CustomEmoji
 import org.javacord.api.entity.message.Message
@@ -18,9 +19,9 @@ import org.javacord.api.entity.user.User
 import org.javacord.api.util.DiscordRegexPattern
 import java.awt.Color
 import java.net.URL
-import kotlin.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.Duration
 import java.util.*
 import kotlin.jvm.optionals.getOrElse
 import kotlin.jvm.optionals.getOrNull
@@ -40,6 +41,7 @@ fun Multiple<*>.ints(): Argument<List<Int>> {
         it.toInt()
       }
     }
+    argumentReturnValue = Int::class
   }
 }
 
@@ -57,6 +59,7 @@ fun Multiple<*>.uInts(): Argument<List<UInt>> {
         it.toUInt()
       }
     }
+    argumentReturnValue = UInt::class
   }
 }
 
@@ -74,6 +77,7 @@ fun Multiple<*>.longs(): Argument<List<Long>> {
         it.toLong()
       }
     }
+    argumentReturnValue = Long::class
   }
 }
 
@@ -91,6 +95,7 @@ fun Multiple<*>.uLongs(): Argument<List<ULong>> {
         it.toULong()
       }
     }
+    argumentReturnValue = ULong::class
   }
 }
 
@@ -108,6 +113,7 @@ fun Multiple<*>.floats(): Argument<List<Float>> {
         it.toFloat()
       }
     }
+    argumentReturnValue = Float::class
   }
 }
 
@@ -125,6 +131,7 @@ fun Multiple<*>.doubles(): Argument<List<Double>> {
         it.toDouble()
       }
     }
+    argumentReturnValue = Double::class
   }
 }
 
@@ -140,7 +147,7 @@ fun Multiple<*>.users(searchMutualGuilds: Boolean = false): Argument<List<User>>
   return (this as Argument<List<User>>).apply {
     argumentListValidator = {
       map {
-        argumentEvent.server.get().let { server ->
+        argumentServer.let { server ->
           if (contains("#")) {
             server.members.firstOrNull { entity ->
               entity.idAsString == it ||
@@ -152,8 +159,8 @@ fun Multiple<*>.users(searchMutualGuilds: Boolean = false): Argument<List<User>>
               entity.getDisplayName(server).equals(it, true)
             }
           }
-        } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
-          argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+        } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
+          argumentUser.mutualServers.firstNotNullOf { server ->
             server.getMemberById(Utils.extractDigits(it)).getOrElse {
               if (contains("#")) {
                 server.members.firstOrNull { entity ->
@@ -171,6 +178,7 @@ fun Multiple<*>.users(searchMutualGuilds: Boolean = false): Argument<List<User>>
         }
       }
     }
+    argumentReturnValue = User::class
   }
 }
 
@@ -186,11 +194,11 @@ fun Multiple<*>.channels(searchMutualGuilds: Boolean = false): Argument<List<Ser
   return (this as Argument<List<ServerChannel>>).apply {
     argumentListValidator = {
       map {
-        argumentEvent.server.get().channels.firstOrNull { entity ->
+        argumentServer.channels.firstOrNull { entity ->
           entity.idAsString == it ||
           entity.name.equals(it, true)
-        } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
-          argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+        } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
+          argumentUser.mutualServers.firstNotNullOf { server ->
             server.channels.firstOrNull { entity ->
               entity.idAsString == it ||
               entity.name.equals(it, true)
@@ -199,6 +207,7 @@ fun Multiple<*>.channels(searchMutualGuilds: Boolean = false): Argument<List<Ser
         }
       }
     }
+    argumentReturnValue = ServerChannel::class
   }
 }
 
@@ -215,11 +224,11 @@ inline fun <reified R : ServerChannel> Multiple<*>.channels(vararg types: KClass
   return (this as Argument<R>).apply {
     argumentListValidator = {
       map {
-        val channel = argumentEvent.server.get().channels.firstOrNull { entity ->
+        val channel = argumentServer.channels.firstOrNull { entity ->
           entity.idAsString == it ||
           entity.name.equals(it, true)
-        } ?: throwUnless(searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
-          argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+        } ?: throwUnless(searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
+          argumentUser.mutualServers.firstNotNullOf { server ->
             server.channels.firstOrNull { entity ->
               entity.idAsString == it ||
               entity.name.equals(it, true)
@@ -235,6 +244,7 @@ inline fun <reified R : ServerChannel> Multiple<*>.channels(vararg types: KClass
         }
       }
     }
+    argumentReturnValue = ServerChannel::class
   }
 }
 
@@ -250,11 +260,11 @@ fun Multiple<*>.textChannels(searchMutualGuilds: Boolean = false): Argument<List
   return (this as Argument<List<ServerTextChannel>>).apply {
     argumentListValidator = {
       map {
-        argumentEvent.server.get().textChannels.firstOrNull { entity ->
+        argumentServer.textChannels.firstOrNull { entity ->
           entity.idAsString == it ||
           entity.name.equals(it, true)
-        } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
-          argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+        } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
+          argumentUser.mutualServers.firstNotNullOf { server ->
             server.textChannels.firstOrNull { entity ->
               entity.idAsString == it ||
               entity.name.equals(it, true)
@@ -263,6 +273,7 @@ fun Multiple<*>.textChannels(searchMutualGuilds: Boolean = false): Argument<List
         }
       }
     }
+    argumentReturnValue = ServerTextChannel::class
   }
 }
 
@@ -278,11 +289,11 @@ fun Multiple<*>.voiceChannels(searchMutualGuilds: Boolean = false): Argument<Lis
   return (this as Argument<List<ServerVoiceChannel>>).apply {
     argumentListValidator = {
       map {
-        argumentEvent.server.get().voiceChannels.firstOrNull { entity ->
+        argumentServer.voiceChannels.firstOrNull { entity ->
           entity.idAsString == it ||
           entity.name.equals(it, true)
-        } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
-          argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+        } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
+          argumentUser.mutualServers.firstNotNullOf { server ->
             server.voiceChannels.firstOrNull { entity ->
               entity.idAsString == it ||
               entity.name.equals(it, true)
@@ -291,6 +302,7 @@ fun Multiple<*>.voiceChannels(searchMutualGuilds: Boolean = false): Argument<Lis
         }
       }
     }
+    argumentReturnValue = ServerVoiceChannel::class
   }
 }
 
@@ -306,11 +318,11 @@ fun Multiple<*>.threadChannels(searchMutualGuilds: Boolean = false): Argument<Li
   return (this as Argument<List<ServerThreadChannel>>).apply {
     argumentListValidator = {
       map {
-        argumentEvent.server.get().threadChannels.firstOrNull { entity ->
+        argumentServer.threadChannels.firstOrNull { entity ->
           entity.idAsString == it ||
           entity.name.equals(it, true)
-        } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
-          argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+        } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
+          argumentUser.mutualServers.firstNotNullOf { server ->
             server.threadChannels.firstOrNull { entity ->
               entity.idAsString == it ||
               entity.name.equals(it, true)
@@ -319,6 +331,7 @@ fun Multiple<*>.threadChannels(searchMutualGuilds: Boolean = false): Argument<Li
         }
       }
     }
+    argumentReturnValue = ServerThreadChannel::class
   }
 }
 
@@ -334,11 +347,11 @@ fun Multiple<*>.stageChannels(searchMutualGuilds: Boolean = false): Argument<Lis
   return (this as Argument<List<ServerStageVoiceChannel>>).apply {
     argumentListValidator = {
       map {
-        argumentEvent.server.get().channels.filter { it.asServerStageVoiceChannel().isPresent }.firstOrNull { entity ->
+        argumentServer.channels.filter { it.asServerStageVoiceChannel().isPresent }.firstOrNull { entity ->
           entity.idAsString == it ||
           entity.name.equals(it, true)
-        } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
-          argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+        } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
+          argumentUser.mutualServers.firstNotNullOf { server ->
             server.channels.filter { it.asServerStageVoiceChannel().isPresent }.firstOrNull { entity ->
               entity.idAsString == it ||
               entity.name.equals(it, true)
@@ -347,6 +360,7 @@ fun Multiple<*>.stageChannels(searchMutualGuilds: Boolean = false): Argument<Lis
         }
       }
     }
+    argumentReturnValue = ServerStageVoiceChannel::class
   }
 }
 
@@ -362,11 +376,11 @@ fun Multiple<*>.forumChannels(searchMutualGuilds: Boolean = false): Argument<Lis
   return (this as Argument<List<ServerForumChannel>>).apply {
     argumentListValidator = {
       map {
-        argumentEvent.server.get().forumChannels.firstOrNull { entity ->
+        argumentServer.forumChannels.firstOrNull { entity ->
           entity.idAsString == it ||
           entity.name.equals(it, true)
-        } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
-          argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+        } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
+          argumentUser.mutualServers.firstNotNullOf { server ->
             server.forumChannels.firstOrNull { entity ->
               entity.idAsString == it ||
               entity.name.equals(it, true)
@@ -375,6 +389,7 @@ fun Multiple<*>.forumChannels(searchMutualGuilds: Boolean = false): Argument<Lis
         }
       }
     }
+    argumentReturnValue = ServerForumChannel::class
   }
 }
 
@@ -390,11 +405,11 @@ fun Multiple<*>.categories(searchMutualGuilds: Boolean = false): Argument<List<C
   return (this as Argument<List<ChannelCategory>>).apply {
     argumentListValidator = {
       map {
-        argumentEvent.server.get().channelCategories.firstOrNull { entity ->
+        argumentServer.channelCategories.firstOrNull { entity ->
           entity.idAsString == it ||
           entity.name.equals(it, true)
-        } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
-          argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+        } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
+          argumentUser.mutualServers.firstNotNullOf { server ->
             server.channelCategories.firstOrNull { entity ->
               entity.idAsString == it ||
               entity.name.equals(it, true)
@@ -403,6 +418,7 @@ fun Multiple<*>.categories(searchMutualGuilds: Boolean = false): Argument<List<C
         }
       }
     }
+    argumentReturnValue = ChannelCategory::class
   }
 }
 
@@ -418,11 +434,11 @@ fun Multiple<*>.roles(searchMutualGuilds: Boolean = false): Argument<List<Role>>
   return (this as Argument<List<Role>>).apply {
     argumentListValidator = {
       map {
-        argumentEvent.server.get().roles.firstOrNull { entity ->
+        argumentServer.roles.firstOrNull { entity ->
           entity.idAsString == it ||
           entity.name.equals(it, true)
-        } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
-          argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+        } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
+          argumentUser.mutualServers.firstNotNullOf { server ->
             server.roles.firstOrNull { entity ->
               entity.idAsString == it ||
               entity.name.equals(it, true)
@@ -431,6 +447,7 @@ fun Multiple<*>.roles(searchMutualGuilds: Boolean = false): Argument<List<Role>>
         }
       }
     }
+    argumentReturnValue = Role::class
   }
 }
 
@@ -449,22 +466,22 @@ fun Multiple<*>.messages(searchMutualGuilds: Boolean = false, includePrivateChan
       map {
         val matchResult = DiscordRegexPattern.MESSAGE_LINK.toRegex().matchEntire(it)
         if (matchResult == null) {
-          argumentEvent.channel.getMessageById(it).get()
+          argumentChannel.getMessageById(it).get()
         } else {
           if (matchResult.groups["server"] == null) {
             require(includePrivateChannels)
-            argumentEvent.messageAuthor.asUser().get().openPrivateChannel().get()
+            argumentUser.openPrivateChannel().get()
               .getMessageById(matchResult.groups["message"]!!.value).get()
           } else {
             try {
-              argumentEvent.server.get().getTextChannelById(matchResult.groups["channel"]!!.value).get().takeIf { channel -> channel.canSee(argumentEvent.messageAuthor.asUser().get()) }!!
+              argumentServer.getTextChannelById(matchResult.groups["channel"]!!.value).get().takeIf { channel -> channel.canSee(argumentUser) }!!
                 .getMessageById(matchResult.groups["message"]!!.value).get()
             } catch (_: NullPointerException) {
               throw IllegalAccessException()
             } catch (_: Exception) {
               throwUnless(searchMutualGuilds) {
-                argumentEvent.messageAuthor.asUser().get().mutualServers.find { server -> server.idAsString == matchResult.groups["server"]!!.value }!!
-                  .getTextChannelById(matchResult.groups["channel"]!!.value).get().takeIf { channel -> channel.canSee(argumentEvent.messageAuthor.asUser().get()) }!!
+                argumentUser.mutualServers.find { server -> server.idAsString == matchResult.groups["server"]!!.value }!!
+                  .getTextChannelById(matchResult.groups["channel"]!!.value).get().takeIf { channel -> channel.canSee(argumentUser) }!!
                   .getMessageById(matchResult.groups["message"]!!.value).get()
               }
             }
@@ -472,6 +489,40 @@ fun Multiple<*>.messages(searchMutualGuilds: Boolean = false, includePrivateChan
         }
       }
     }
+    argumentReturnValue = Message::class
+  }
+}
+
+/**
+ * Retrieves [Mentionable]s based on the argument values.
+ *
+ * Use [mentionable] to convert multiple values into a single one.
+ *
+ * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
+ * @return An Argument containing a list with retrieved [Mentionable] values.
+ */
+fun Multiple<*>.mentionables(searchMutualGuilds: Boolean = false): Argument<List<Mentionable>> {
+  return (this as Argument<List<Mentionable>>).apply {
+    argumentListValidator = {
+      map {
+        val matchResult = DiscordRegexPattern.USER_MENTION.toRegex().matchEntire(it)
+                          ?: DiscordRegexPattern.CHANNEL_MENTION.toRegex().matchEntire(it)
+                          ?: DiscordRegexPattern.ROLE_MENTION.toRegex().matchEntire(it)
+                          ?: throw IllegalArgumentException()
+        
+        argumentServer.getMemberById(matchResult.groups["id"]!!.value).getOrNull()
+        ?: argumentServer.getChannelById(matchResult.groups["id"]!!.value).getOrNull()
+        ?: argumentServer.getRoleById(matchResult.groups["id"]!!.value).getOrNull()
+        ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()){
+          argumentUser.mutualServers.firstNotNullOf { server ->
+            server.getMemberById(matchResult.groups["id"]!!.value).getOrNull()
+            ?: server.getChannelById(matchResult.groups["id"]!!.value).getOrNull()
+            ?: server.getRoleById(matchResult.groups["id"]!!.value).getOrNull()
+          }
+        }
+      }
+    }
+    argumentReturnValue = Mentionable::class
   }
 }
 
@@ -488,13 +539,14 @@ fun Multiple<*>.customEmojis(searchMutualGuilds: Boolean = false): Argument<List
     argumentListValidator = {
       map {
         val matchResult = DiscordRegexPattern.CUSTOM_EMOJI.toRegex().matchEntire(it) ?: throw IllegalArgumentException()
-        argumentEvent.server.get().getCustomEmojiById(matchResult.groups["id"]!!.value).getOrNull() ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
-          argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+        argumentServer.getCustomEmojiById(matchResult.groups["id"]!!.value).getOrNull() ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
+          argumentUser.mutualServers.firstNotNullOf { server ->
             server.getCustomEmojiById(matchResult.groups["id"]!!.value).get()
           }
         }
       }
     }
+    argumentReturnValue = CustomEmoji::class
   }
 }
 
@@ -512,6 +564,7 @@ fun Multiple<*>.snowflakes(): Argument<List<Snowflake>> {
         Snowflake(toLong().takeIf { it > 0 }!!)
       }
     }
+    argumentReturnValue = Snowflake::class
   }
 }
 
@@ -529,6 +582,7 @@ fun Multiple<*>.urls(): Argument<List<URL>> {
         URL(it)
       }
     }
+    argumentReturnValue = URL::class
   }
 }
 
@@ -546,6 +600,7 @@ fun Multiple<*>.durations(): Argument<List<Duration>> {
         Utils.parseDuration(it) ?: throw IllegalArgumentException()
       }
     }
+    argumentReturnValue = Duration::class
   }
 }
 
@@ -564,6 +619,7 @@ fun Multiple<*>.dates(locale: Locale = Locale.ENGLISH): Argument<List<LocalDate>
         Utils.parseDate(it, locale)?.toLocalDate() ?: throw IllegalArgumentException()
       }
     }
+    argumentReturnValue = LocalDate::class
   }
 }
 
@@ -582,6 +638,7 @@ fun Multiple<*>.dateTimes(locale: Locale = Locale.ENGLISH): Argument<List<LocalD
         Utils.parseDate(it, locale) ?: throw IllegalArgumentException()
       }
     }
+    argumentReturnValue = LocalDateTime::class
   }
 }
 
@@ -599,6 +656,7 @@ fun Multiple<*>.colors(): Argument<List<Color>> {
         Color::class.java.getField(it)[null] as? Color ?: Color.decode(it)
       }
     }
+    argumentReturnValue = Color::class
   }
 }
 
@@ -616,6 +674,7 @@ fun Multiple<*>.unicodeEmojis(): Argument<List<Emoji>> {
         EmojiManager.getEmoji(it).get()
       }
     }
+    argumentReturnValue = Emoji::class
   }
 }
 
@@ -633,6 +692,7 @@ inline fun <reified T : Enum<T>> Multiple<*>.enums(): Argument<T> {
         enumValueOf<T>(it.uppercase().replace(" ", "_"))
       }
     }
+    argumentReturnValue = T::class
   }
 }
 
@@ -646,11 +706,15 @@ inline fun <reified T : Enum<T>> Multiple<*>.enums(): Argument<T> {
  */
 fun <T> Multiple<*>.maps(values: Map<String, T>, ignoreCase: Boolean = false): Argument<List<T>> {
   return (this as Argument<List<T>>).apply {
+    argumentChoices = values.mapValues {
+      it.value.toString()
+    }
     argumentListValidator = {
       map {
         values[if(ignoreCase) it.lowercase() else it]!!
       }
     }
+    argumentReturnValue = Map::class
   }
 }
 
@@ -664,11 +728,15 @@ fun <T> Multiple<*>.maps(values: Map<String, T>, ignoreCase: Boolean = false): A
  */
 fun <T> Multiple<*>.maps(vararg values: Pair<String, T>, ignoreCase: Boolean = false): Argument<List<T>> {
   return (this as Argument<List<T>>).apply {
+    argumentChoices = values.associate {
+      it.first to it.second.toString()
+    }
     argumentListValidator = {
       map {
         mapOf(*values)[if(ignoreCase) it.lowercase() else it]!!
       }
     }
+    argumentReturnValue = Map::class
   }
 }
 
