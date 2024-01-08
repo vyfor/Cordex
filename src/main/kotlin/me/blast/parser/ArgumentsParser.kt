@@ -4,11 +4,26 @@ import me.blast.command.argument.Argument
 import me.blast.command.argument.builder.ArgumentType
 import me.blast.parser.exception.ArgumentException
 import me.blast.utils.Utils.takeWhileWithIndex
+import org.javacord.api.entity.Mentionable
+import org.javacord.api.entity.channel.ChannelCategory
+import org.javacord.api.entity.channel.ServerChannel
+import org.javacord.api.entity.channel.ServerForumChannel
+import org.javacord.api.entity.channel.ServerStageVoiceChannel
+import org.javacord.api.entity.channel.ServerTextChannel
+import org.javacord.api.entity.channel.ServerThreadChannel
+import org.javacord.api.entity.channel.ServerVoiceChannel
+import org.javacord.api.entity.emoji.CustomEmoji
+import org.javacord.api.entity.message.Message
+import org.javacord.api.entity.permission.Role
+import org.javacord.api.entity.user.User
+import org.javacord.api.event.interaction.SlashCommandCreateEvent
 import org.javacord.api.event.message.MessageCreateEvent
+import kotlin.jvm.optionals.getOrNull
+import kotlin.math.absoluteValue
 
 object ArgumentsParser {
   @Throws(ArgumentException::class)
-  fun parse(input: List<String>, options: List<Argument<*>>, event: MessageCreateEvent, guildOnly: Boolean): Map<String, Any> {
+  fun parseTextCommand(input: List<String>, options: List<Argument<*>>, event: MessageCreateEvent, guildOnly: Boolean): Map<String, Any> {
     val args = input.listIterator()
     val validationList = options.toMutableList()
     val map = mutableMapOf<String, Any>()
@@ -21,7 +36,9 @@ object ArgumentsParser {
       }
       if (arg != null) {
         arg.guildOnly = guildOnly
-        arg.argumentEvent = event
+        event.server.ifPresent { arg.argumentServer = it }
+        arg.argumentChannel = event.channel
+        arg.argumentUser = event.messageAuthor.asUser().get()
         when (arg.argumentType) {
           ArgumentType.FLAG -> {
             map[arg.argumentName!!] = true
@@ -80,6 +97,37 @@ object ArgumentsParser {
       }
     }
     if (missingArgs.isNotEmpty()) throw ArgumentException.Missing(missingArgs)
+    
+    return map
+  }
+  
+  @Throws(ArgumentException::class)
+  fun parseSlashCommand(options: List<Argument<*>>, event: SlashCommandCreateEvent): Map<String, Any> {
+    val args = event.slashCommandInteraction.arguments.listIterator()
+    val map = mutableMapOf<String, Any>()
+    options.forEach { arg ->
+      event.slashCommandInteraction.server.ifPresent { arg.argumentServer = it }
+      event.slashCommandInteraction.channel.ifPresent { arg.argumentChannel = it }
+      arg.argumentUser = event.slashCommandInteraction.user
+      map[arg.argumentName!!] = when (arg.argumentReturnValue) {
+        String::class -> args.next().stringValue.get()
+        Boolean::class -> args.next().booleanValue.get()
+        Int::class, Long::class -> args.next().longValue.get()
+        UInt::class, ULong::class -> args.next().longValue.get().absoluteValue
+        Float::class, Double::class -> args.next().decimalValue.get()
+        User::class -> args.next().userValue.get()
+        ServerChannel::class -> args.next().channelValue.get()
+        Role::class -> args.next().roleValue.get()
+        Mentionable::class -> args.next().mentionableValue.get()
+        ServerTextChannel::class -> args.next().channelValue.get().asServerTextChannel().get()
+        ServerVoiceChannel::class -> args.next().channelValue.get().asServerVoiceChannel().get()
+        ServerThreadChannel::class -> args.next().channelValue.get().asServerThreadChannel().get()
+        ServerStageVoiceChannel::class -> args.next().channelValue.get().asServerStageVoiceChannel().get()
+        ServerForumChannel::class -> args.next().channelValue.get().asServerForumChannel().get()
+        ChannelCategory::class -> args.next().channelValue.get().asChannelCategory().get()
+        else -> arg.argumentValidator!!.invoke(args.next().stringValue.get())!!
+      }
+    }
     
     return map
   }

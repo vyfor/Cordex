@@ -1,24 +1,26 @@
-package me.blast.command
+package me.blast.command.text
 
+import me.blast.command.Arguments
+import me.blast.command.BaseCommand
 import me.blast.command.argument.builder.ArgumentBuilder
 import org.javacord.api.entity.permission.PermissionType
 import kotlin.time.Duration
 
-abstract class Command(
+abstract class TextCommand(
   name: String,
-  val description: String = "No description provided.",
+  override val description: String = "No description provided",
   aliases: List<String>? = null,
   val type: String? = null,
   val permissions: List<PermissionType>? = null,
   val selfPermissions: List<PermissionType>? = null,
-  val subcommands: List<Command>? = null,
+  val subcommands: List<TextCommand>? = null,
   val userCooldown: Duration = Duration.ZERO,
   val channelCooldown: Duration = Duration.ZERO,
   val serverCooldown: Duration = Duration.ZERO,
-  val runAsDefault: Boolean = false,
+  val isNsfw: Boolean = false,
   override val guildOnly: Boolean = false,
-) : ArgumentBuilder(guildOnly) {
-  val name = name.lowercase()
+) : ArgumentBuilder(guildOnly), BaseCommand {
+  override val name = name.lowercase()
   val aliases = aliases?.map { it.lowercase() }
   
   init {
@@ -29,5 +31,5 @@ abstract class Command(
     ) throw IllegalArgumentException("Cooldown cannot be negative.")
   }
   
-  abstract suspend fun Arguments.execute(ctx: Context)
+  abstract suspend fun Arguments.execute(ctx: TextContext)
 }

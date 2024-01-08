@@ -4,12 +4,16 @@ package me.blast.command.argument
 
 import me.blast.command.argument.builder.ArgumentType
 import me.blast.utils.Utils
-import org.javacord.api.event.message.MessageCreateEvent
+import org.javacord.api.entity.channel.TextChannel
+import org.javacord.api.entity.server.Server
+import org.javacord.api.entity.user.User
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 
 sealed class Argument<T>(copyFrom: Argument<*>? = null, val options: ArrayList<Argument<*>>) {
-  lateinit var argumentEvent: MessageCreateEvent
+  lateinit var argumentServer: Server
+  lateinit var argumentChannel: TextChannel
+  lateinit var argumentUser: User
   lateinit var argumentType: ArgumentType
   var argumentName: String? = null
   var argumentShortName: String? = null

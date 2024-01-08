@@ -21,11 +21,11 @@ import java.awt.Color
 import java.net.URL
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.Duration
 import java.util.*
 import kotlin.jvm.optionals.getOrElse
 import kotlin.jvm.optionals.getOrNull
 import kotlin.reflect.KClass
-import kotlin.time.Duration
 
 /**
  * Converts the argument value(s) to an integer.
@@ -122,7 +122,7 @@ fun OptionalArg<*>.double(): Argument<Double?> {
 fun OptionalArg<*>.user(searchMutualGuilds: Boolean = false): Argument<User?> {
   return (this as Argument<User?>).apply {
     argumentValidator = {
-      argumentEvent.server.get().let { server ->
+      argumentServer.let { server ->
         if (contains("#")) {
           server.members.firstOrNull {
             it.idAsString == this ||
@@ -134,8 +134,8 @@ fun OptionalArg<*>.user(searchMutualGuilds: Boolean = false): Argument<User?> {
             it.getDisplayName(server).equals(this, true)
           }
         }
-      } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
-        argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+      } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
+        argumentUser.mutualServers.firstNotNullOf { server ->
           server.getMemberById(Utils.extractDigits(this)).getOrElse {
             if (contains("#")) {
               server.members.firstOrNull {
@@ -167,11 +167,11 @@ fun OptionalArg<*>.user(searchMutualGuilds: Boolean = false): Argument<User?> {
 fun OptionalArg<*>.channel(searchMutualGuilds: Boolean = false): Argument<ServerChannel?> {
   return (this as Argument<ServerChannel?>).apply {
     argumentValidator = {
-      argumentEvent.server.get().channels.firstOrNull {
+      argumentServer.channels.firstOrNull {
         it.idAsString == this ||
         it.name.equals(this, true)
-      } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
-        argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+      } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
+        argumentUser.mutualServers.firstNotNullOf { server ->
           server.channels.firstOrNull {
             it.idAsString == this ||
             it.name.equals(this, true)
@@ -195,11 +195,11 @@ fun OptionalArg<*>.channel(searchMutualGuilds: Boolean = false): Argument<Server
 inline fun <reified R : ServerChannel> OptionalArg<*>.channel(vararg types: KClass<out R>, searchMutualGuilds: Boolean = false): Argument<R?> {
   return (this as Argument<R?>).apply {
     argumentValidator = {
-      val channel = argumentEvent.server.get().channels.firstOrNull {
+      val channel = argumentServer.channels.firstOrNull {
         it.idAsString == this ||
         it.name.equals(this, true)
-      } ?: throwUnless(searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
-        argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+      } ?: throwUnless(searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
+        argumentUser.mutualServers.firstNotNullOf { server ->
           server.channels.firstOrNull {
             it.idAsString == this ||
             it.name.equals(this, true)
@@ -229,11 +229,11 @@ inline fun <reified R : ServerChannel> OptionalArg<*>.channel(vararg types: KCla
 fun OptionalArg<*>.textChannel(searchMutualGuilds: Boolean = false): Argument<ServerTextChannel?> {
   return (this as Argument<ServerTextChannel?>).apply {
     argumentValidator = {
-      argumentEvent.server.get().textChannels.firstOrNull {
+      argumentServer.textChannels.firstOrNull {
         it.idAsString == this ||
         it.name.equals(this, true)
-      } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
-        argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+      } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
+        argumentUser.mutualServers.firstNotNullOf { server ->
           server.textChannels.firstOrNull {
             it.idAsString == this ||
             it.name.equals(this, true)
@@ -256,11 +256,11 @@ fun OptionalArg<*>.textChannel(searchMutualGuilds: Boolean = false): Argument<Se
 fun OptionalArg<*>.voiceChannel(searchMutualGuilds: Boolean = false): Argument<ServerVoiceChannel?> {
   return (this as Argument<ServerVoiceChannel?>).apply {
     argumentValidator = {
-      argumentEvent.server.get().voiceChannels.firstOrNull {
+      argumentServer.voiceChannels.firstOrNull {
         it.idAsString == this ||
         it.name.equals(this, true)
-      } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
-        argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+      } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
+        argumentUser.mutualServers.firstNotNullOf { server ->
           server.voiceChannels.firstOrNull {
             it.idAsString == this ||
             it.name.equals(this, true)
@@ -283,11 +283,11 @@ fun OptionalArg<*>.voiceChannel(searchMutualGuilds: Boolean = false): Argument<S
 fun OptionalArg<*>.threadChannel(searchMutualGuilds: Boolean = false): Argument<ServerThreadChannel?> {
   return (this as Argument<ServerThreadChannel?>).apply {
     argumentValidator = {
-      argumentEvent.server.get().threadChannels.firstOrNull {
+      argumentServer.threadChannels.firstOrNull {
         it.idAsString == this ||
         it.name.equals(this, true)
-      } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
-        argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+      } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
+        argumentUser.mutualServers.firstNotNullOf { server ->
           server.threadChannels.firstOrNull {
             it.idAsString == this ||
             it.name.equals(this, true)
@@ -310,11 +310,11 @@ fun OptionalArg<*>.threadChannel(searchMutualGuilds: Boolean = false): Argument<
 fun OptionalArg<*>.stageChannel(searchMutualGuilds: Boolean = false): Argument<ServerStageVoiceChannel?> {
   return (this as Argument<ServerStageVoiceChannel?>).apply {
     argumentValidator = {
-      argumentEvent.server.get().channels.filter { it.asServerStageVoiceChannel().isPresent }.firstOrNull {
+      argumentServer.channels.filter { it.asServerStageVoiceChannel().isPresent }.firstOrNull {
         it.idAsString == this ||
         it.name.equals(this, true)
-      } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
-        argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+      } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
+        argumentUser.mutualServers.firstNotNullOf { server ->
           server.channels.filter { it.asServerStageVoiceChannel().isPresent }.firstOrNull {
             it.idAsString == this ||
             it.name.equals(this, true)
@@ -337,11 +337,11 @@ fun OptionalArg<*>.stageChannel(searchMutualGuilds: Boolean = false): Argument<S
 fun OptionalArg<*>.forumChannel(searchMutualGuilds: Boolean = false): Argument<ServerForumChannel?> {
   return (this as Argument<ServerForumChannel?>).apply {
     argumentValidator = {
-      argumentEvent.server.get().forumChannels.firstOrNull {
+      argumentServer.forumChannels.firstOrNull {
         it.idAsString == this ||
         it.name.equals(this, true)
-      } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
-        argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+      } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
+        argumentUser.mutualServers.firstNotNullOf { server ->
           server.forumChannels.firstOrNull {
             it.idAsString == this ||
             it.name.equals(this, true)
@@ -364,11 +364,11 @@ fun OptionalArg<*>.forumChannel(searchMutualGuilds: Boolean = false): Argument<S
 fun OptionalArg<*>.category(searchMutualGuilds: Boolean = false): Argument<ChannelCategory?> {
   return (this as Argument<ChannelCategory?>).apply {
     argumentValidator = {
-      argumentEvent.server.get().channelCategories.firstOrNull {
+      argumentServer.channelCategories.firstOrNull {
         it.idAsString == this ||
         it.name.equals(this, true)
-      } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
-        argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+      } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
+        argumentUser.mutualServers.firstNotNullOf { server ->
           server.channelCategories.firstOrNull {
             it.idAsString == this ||
             it.name.equals(this, true)
@@ -391,11 +391,11 @@ fun OptionalArg<*>.category(searchMutualGuilds: Boolean = false): Argument<Chann
 fun OptionalArg<*>.role(searchMutualGuilds: Boolean = false): Argument<Role?> {
   return (this as Argument<Role?>).apply {
     argumentValidator = {
-      argumentEvent.server.get().roles.firstOrNull {
+      argumentServer.roles.firstOrNull {
         it.idAsString == this ||
         it.name.equals(this, true)
-      } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
-        argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+      } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
+        argumentUser.mutualServers.firstNotNullOf { server ->
           server.roles.firstOrNull {
             it.idAsString == this ||
             it.name.equals(this, true)
@@ -421,22 +421,22 @@ fun OptionalArg<*>.message(searchMutualGuilds: Boolean = false, includePrivateCh
     argumentValidator = {
       val matchResult = DiscordRegexPattern.MESSAGE_LINK.toRegex().matchEntire(this)
       if (matchResult == null) {
-        argumentEvent.channel.getMessageById(this).get()
+        argumentChannel.getMessageById(this).get()
       } else {
         if (matchResult.groups["server"] == null) {
           require(includePrivateChannels)
-          argumentEvent.messageAuthor.asUser().get().openPrivateChannel().get()
+          argumentUser.openPrivateChannel().get()
             .getMessageById(matchResult.groups["message"]!!.value).get()
         } else {
           try {
-            argumentEvent.server.get().getTextChannelById(matchResult.groups["channel"]!!.value).get().takeIf { it.canSee(argumentEvent.messageAuthor.asUser().get()) }!!
+            argumentServer.getTextChannelById(matchResult.groups["channel"]!!.value).get().takeIf { it.canSee(argumentUser) }!!
               .getMessageById(matchResult.groups["message"]!!.value).get()
           } catch (_: NullPointerException) {
             throw IllegalAccessException()
           } catch (_: Exception) {
             throwUnless(searchMutualGuilds) {
-              argumentEvent.messageAuthor.asUser().get().mutualServers.find { it.idAsString == matchResult.groups["server"]!!.value }!!
-                .getTextChannelById(matchResult.groups["channel"]!!.value).get().takeIf { it.canSee(argumentEvent.messageAuthor.asUser().get()) }!!
+              argumentUser.mutualServers.find { it.idAsString == matchResult.groups["server"]!!.value }!!
+                .getTextChannelById(matchResult.groups["channel"]!!.value).get().takeIf { it.canSee(argumentUser) }!!
                 .getMessageById(matchResult.groups["message"]!!.value).get()
             }
           }
@@ -463,17 +463,18 @@ fun OptionalArg<*>.mentionable(searchMutualGuilds: Boolean = false): Argument<Me
                         ?: DiscordRegexPattern.ROLE_MENTION.toRegex().matchEntire(this)
                         ?: throw IllegalArgumentException()
       
-      argumentEvent.server.get().getMemberById(matchResult.groups["id"]!!.value).getOrNull()
-      ?: argumentEvent.server.get().getChannelById(matchResult.groups["id"]!!.value).getOrNull()
-      ?: argumentEvent.server.get().getRoleById(matchResult.groups["id"]!!.value).getOrNull()
-      ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()){
-        argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+      argumentServer.getMemberById(matchResult.groups["id"]!!.value).getOrNull()
+      ?: argumentServer.getChannelById(matchResult.groups["id"]!!.value).getOrNull()
+      ?: argumentServer.getRoleById(matchResult.groups["id"]!!.value).getOrNull()
+      ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()){
+        argumentUser.mutualServers.firstNotNullOf { server ->
           server.getMemberById(matchResult.groups["id"]!!.value).getOrNull()
           ?: server.getChannelById(matchResult.groups["id"]!!.value).getOrNull()
           ?: server.getRoleById(matchResult.groups["id"]!!.value).getOrNull()
         }
       }
     }
+    argumentReturnValue = Mentionable::class
   }
 }
 
@@ -489,8 +490,8 @@ fun OptionalArg<*>.customEmoji(searchMutualGuilds: Boolean = false): Argument<Cu
   return (this as Argument<CustomEmoji?>).apply {
     argumentValidator = {
       val matchResult = DiscordRegexPattern.CUSTOM_EMOJI.toRegex().matchEntire(this) ?: throw IllegalArgumentException()
-      argumentEvent.server.get().getCustomEmojiById(matchResult.groups["id"]!!.value).getOrNull() ?: throwUnless(!guildOnly && searchMutualGuilds && argumentEvent.channel.asPrivateChannel().hasValue()) {
-        argumentEvent.messageAuthor.asUser().get().mutualServers.firstNotNullOf { server ->
+      argumentServer.getCustomEmojiById(matchResult.groups["id"]!!.value).getOrNull() ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
+        argumentUser.mutualServers.firstNotNullOf { server ->
           server.getCustomEmojiById(matchResult.groups["id"]!!.value).get()
         }
       }

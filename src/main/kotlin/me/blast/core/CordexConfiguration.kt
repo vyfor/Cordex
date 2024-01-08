@@ -1,18 +1,18 @@
 package me.blast.core
 
-import me.blast.command.Command
 import me.blast.parser.exception.ArgumentException
 import me.blast.utils.command.suggestions.DistanceAccuracy
 import me.blast.utils.cooldown.Cooldown
 import me.blast.utils.cooldown.CooldownType
-import org.javacord.api.event.message.MessageCreateEvent
+import me.blast.utils.event.CommandEvent
+import me.blast.utils.event.TextCommandEvent
 
 class CordexConfiguration {
   var prefix: (Long) -> String = { "!" }
-  var errorHandler: ((MessageCreateEvent, Command, Exception) -> Unit)? = null
-  var parsingErrorHandler: ((MessageCreateEvent, Command, ArgumentException) -> Unit)? = null
-  var cooldownHandler: ((MessageCreateEvent, Command, Cooldown, CooldownType) -> Unit)? = null
+  var errorHandler: ((CommandEvent, Exception) -> Unit)? = null
+  var parsingErrorHandler: ((CommandEvent, ArgumentException) -> Unit)? = null
+  var cooldownHandler: ((CommandEvent, Cooldown, CooldownType) -> Unit)? = null
   var enableCommandSuggestions: Boolean = false
   var commandSuggestionAccuracy: DistanceAccuracy = DistanceAccuracy.STRICT
-  val interceptors: MutableMap<String, (MessageCreateEvent, Command) -> Boolean> = mutableMapOf()
+  val interceptors: MutableMap<String, (TextCommandEvent) -> Boolean> = mutableMapOf()
 }

@@ -1,17 +1,26 @@
+@file:Suppress("MemberVisibilityCanBePrivate", "unused")
+
 package me.blast.utils.command
 
-import me.blast.command.Command
+import me.blast.command.text.TextCommand
 import me.blast.command.argument.Argument
 import me.blast.command.argument.builder.ArgumentType
+import me.blast.command.slash.SlashCommand
 import me.blast.parser.exception.ArgumentException
+import org.javacord.api.entity.channel.ServerChannel
 import org.javacord.api.entity.message.MessageAuthor
 import org.javacord.api.entity.message.embed.EmbedBuilder
+import org.javacord.api.entity.permission.Role
+import org.javacord.api.entity.user.User
+import org.javacord.api.interaction.SlashCommandBuilder
+import org.javacord.api.interaction.SlashCommandOptionBuilder
+import org.javacord.api.interaction.SlashCommandOptionType
 import java.awt.Color
 import java.util.*
 import kotlin.math.abs
 
 object CommandUtils {
-  fun Command.generateHelpMessage(user: MessageAuthor) = EmbedBuilder().apply {
+  fun TextCommand.generateHelpMessage(user: MessageAuthor) = EmbedBuilder().apply {
     setTitle("Help for ${name.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }} command")
     if (aliases?.isNotEmpty() == true) addField("Aliases", aliases.joinToString(prefix = "`", separator = "`, `", postfix = "`"))
     addField("Description", description)
@@ -64,10 +73,23 @@ object CommandUtils {
       
       is ArgumentException.Missing -> {
         exception.arguments.partition { it.argumentType == ArgumentType.POSITIONAL }.run {
-          first.joinToString("\n") { option ->
-            "\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (option.argumentIsOptional || option.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m<\u001B[1;31m${option.argumentName}\u001B[0;30m>:\n     \u001B[0;33m${option.argumentDescription}"
-          } + second.joinToString("\n") { option ->
-            "\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (option.argumentIsOptional || option.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m--\u001B[1;31m${option.argumentName}${if (option.argumentShortName != null) "\u001B[0;30m, -\u001B[1;31m${option.argumentShortName}" else ""}:\n     \u001B[0;33m${option.argumentDescription}"
+          buildString {
+            if (first.isNotEmpty()) {
+              append("Positional Arguments:\n")
+              append(
+                first.joinToString("\n") { option ->
+                  "\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (option.argumentIsOptional || option.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m<\u001B[1;31m${option.argumentName}\u001B[0;30m>:\n     \u001B[0;33m${option.argumentDescription}"
+                }
+              )
+            }
+            if (second.isNotEmpty()) {
+              append("\n\nOptions:\n")
+              append(
+                second.joinToString("\n") { option ->
+                  "\u001B[4;31m>>>\u001B[0m  \u001B[0;30m[\u001B[0;31m${if (option.argumentIsOptional || option.argumentType == ArgumentType.FLAG) "?" else "*"}\u001B[0;30m]  \u001B[0;30m--\u001B[1;31m${option.argumentName}${if (option.argumentShortName != null) "\u001B[0;30m, -\u001B[1;31m${option.argumentShortName}" else ""}:\n     \u001B[0;33m${option.argumentDescription}"
+                }
+              )
+            }
           }
         }
       }
@@ -96,5 +118,63 @@ object CommandUtils {
     }
     
     return result
+  }
+  
+  fun generateSlashCommands(commands: Collection<SlashCommand>): Pair<Set<SlashCommandBuilder>, Map<Long, Set<SlashCommandBuilder>>> {
+    fun createSlashCommand(command: SlashCommand): SlashCommandBuilder {
+      return SlashCommandBuilder()
+        .setName(command.name)
+        .setDescription(command.description)
+        .setEnabledInDms(!command.guildOnly)
+        .setOptions(
+          command.options.map { argument ->
+            SlashCommandOptionBuilder()
+              .setRequired(!argument.argumentIsOptional)
+              .setName(argument.argumentName!!)
+              .setDescription(argument.argumentDescription)
+              .apply {
+                if (argument.argumentChoices != null) argument.argumentChoices!!.forEach { (k, v) ->
+                  addChoice(k, v)
+                }
+                when (argument.argumentReturnValue) {
+                  Int::class -> {
+                    setLongMinValue(Int.MIN_VALUE.toLong())
+                    setMaxLength(Int.MAX_VALUE.toLong())
+                  }
+                  
+                  UInt::class -> {
+                    setLongMinValue(0)
+                    setMaxLength(UInt.MAX_VALUE.toLong())
+                  }
+                  
+                  ULong::class -> {
+                    setLongMinValue(0)
+                  }
+                }
+              }
+              .setType(
+                when (argument.argumentReturnValue) {
+                  Boolean::class -> SlashCommandOptionType.BOOLEAN
+                  Int::class, Long::class, UInt::class, ULong::class -> SlashCommandOptionType.LONG
+                  Float::class, Double::class -> SlashCommandOptionType.DECIMAL
+                  User::class -> SlashCommandOptionType.USER
+                  ServerChannel::class -> SlashCommandOptionType.CHANNEL
+                  Role::class -> SlashCommandOptionType.ROLE
+                  else -> SlashCommandOptionType.STRING
+                }
+              )
+              .build()
+          }
+        ).apply {
+          if (!command.permissions.isNullOrEmpty()) setDefaultEnabledForPermissions(*command.permissions.toTypedArray())
+        }
+    }
+    
+    val (globalCommands, serverCommands) = commands.partition { it.guildId == null }
+    return globalCommands.map(::createSlashCommand).toSet() to serverCommands
+      .groupBy { it.guildId!!.toLong() }
+      .mapValues { (_, cmd) ->
+        cmd.map(::createSlashCommand).toSet()
+      }
   }
 }
