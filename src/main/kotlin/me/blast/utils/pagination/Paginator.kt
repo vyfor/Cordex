@@ -138,76 +138,18 @@ class Paginator<T>(
   }
   
   private fun addButtons(customId: String, messageBuilder: MessageBuilder): MessageBuilder {
-    if (canClose) {
-      if (totalPages > 3) messageBuilder.addComponents(
-        ActionRow.of(
-          Button.primary(customId + "FIRST", "«", currentPageIndex == 0),
-          Button.primary(customId + "PREV", "←", currentPageIndex == 0),
-          Button.danger(customId + "CLOSE", "\uD83D\uDDD1"),
-          Button.primary(customId + "NEXT", "→", currentPageIndex == totalPages - 1),
-          Button.primary(customId + "LAST", "»", currentPageIndex == totalPages - 1)
-        )
-      )
-      else messageBuilder.addComponents(
-        ActionRow.of(
-          Button.primary(customId + "PREV", "←", currentPageIndex == 0),
-          Button.danger(customId + "CLOSE", "\uD83D\uDDD1"),
-          Button.primary(customId + "NEXT", "→", currentPageIndex == totalPages - 1)
-        )
-      )
-    } else {
-      if (totalPages > 3) messageBuilder.addComponents(
-        ActionRow.of(
-          Button.primary(customId + "FIRST", "«", currentPageIndex == 0),
-          Button.primary(customId + "PREV", "←", currentPageIndex == 0),
-          Button.primary(customId + "NEXT", "→", currentPageIndex == totalPages - 1),
-          Button.primary(customId + "LAST", "»", currentPageIndex == totalPages - 1)
-        )
-      )
-      else messageBuilder.addComponents(
-        ActionRow.of(
-          Button.primary(customId + "PREV", "←", currentPageIndex == 0),
-          Button.primary(customId + "NEXT", "→", currentPageIndex == totalPages - 1)
-        )
-      )
-    }
-    return messageBuilder
+    return messageBuilder.addComponents(ActionRow.of(getButtons(customId)))
   }
   
-  private fun addButtons(customId: String, messageBuilder: MessageUpdater): MessageUpdater {
-    if (canClose) {
-      if (totalPages > 3) messageBuilder.addComponents(
-        ActionRow.of(
-          Button.primary(customId + "FIRST", "«", currentPageIndex == 0),
-          Button.primary(customId + "PREV", "←", currentPageIndex == 0),
-          Button.danger(customId + "CLOSE", "\uD83D\uDDD1"),
-          Button.primary(customId + "NEXT", "→", currentPageIndex == totalPages - 1),
-          Button.primary(customId + "LAST", "»", currentPageIndex == totalPages - 1)
-        )
-      )
-      else messageBuilder.addComponents(
-        ActionRow.of(
-          Button.primary(customId + "PREV", "←", currentPageIndex == 0),
-          Button.danger(customId + "CLOSE", "\uD83D\uDDD1"),
-          Button.primary(customId + "NEXT", "→", currentPageIndex == totalPages - 1)
-        )
-      )
-    } else {
-      if (totalPages > 3) messageBuilder.addComponents(
-        ActionRow.of(
-          Button.primary(customId + "FIRST", "«", currentPageIndex == 0),
-          Button.primary(customId + "PREV", "←", currentPageIndex == 0),
-          Button.primary(customId + "NEXT", "→", currentPageIndex == totalPages - 1),
-          Button.primary(customId + "LAST", "»", currentPageIndex == totalPages - 1)
-        )
-      )
-      else messageBuilder.addComponents(
-        ActionRow.of(
-          Button.primary(customId + "PREV", "←", currentPageIndex == 0),
-          Button.primary(customId + "NEXT", "→", currentPageIndex == totalPages - 1)
-        )
-      )
-    }
-    return messageBuilder
+  private fun addButtons(customId: String, messageUpdater: MessageUpdater): MessageUpdater {
+    return messageUpdater.addComponents(ActionRow.of(getButtons(customId)))
+  }
+  
+  private fun getButtons(customId: String): List<Button> = buildList {
+    if (totalPages > 3) add(Button.primary(customId + "FIRST", "«", currentPageIndex == 0))
+    add(Button.primary(customId + "PREV", "←", currentPageIndex == 0))
+    if (canClose) add(Button.danger(customId + "CLOSE", "\uD83D\uDDD1"))
+    add(Button.primary(customId + "NEXT", "→", currentPageIndex == totalPages - 1))
+    if (totalPages > 3) add(Button.primary(customId + "LAST", "»", currentPageIndex == totalPages - 1))
   }
 }
