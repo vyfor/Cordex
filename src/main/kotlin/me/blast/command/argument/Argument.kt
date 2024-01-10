@@ -56,7 +56,7 @@ sealed class Argument<T>(copyFrom: Argument<*>? = null, val options: ArrayList<A
     if (argumentName == null) argumentName = Utils.convertCamelToKebab(property.name)
     else require(argumentName!!.isNotBlank())
     if (argumentType != ArgumentType.POSITIONAL) {
-      if (argumentShortName == null) argumentShortName = property.name.substring(0, 1)
+      if (argumentShortName == null) argumentShortName = argumentName!!.substring(0, 1)
       else require(argumentShortName!!.isNotBlank())
       if (argumentType == ArgumentType.FLAG) {
         argumentIsOptional = true

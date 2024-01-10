@@ -5,12 +5,14 @@ package me.blast.core
 import me.blast.command.BaseCommand
 import me.blast.command.text.TextCommand
 import me.blast.command.slash.SlashCommand
+import me.blast.command.text.TextSubcommand
 import me.blast.utils.Utils
 import kotlin.system.measureTimeMillis
 
 class CordexCommands {
   private val textCommands = mutableMapOf<String, TextCommand>()
   private val slashCommands = mutableMapOf<String, SlashCommand>()
+  private val textSubCommands = mutableMapOf<String, TextSubcommand>()
   
   /**
    * Get a map containing the registered text commands.
@@ -67,9 +69,10 @@ class CordexCommands {
   /**
    * Load commands from the specified package.
    *
-   * @param packageName The package to search for command classes.
-   * *If not provided, the function will scan all source
-   * code files for applicable classes implementing the [BaseCommand] interface.*
+   * @param packageName The package to search for command classes. (e.g. me.blast)
+   *
+   * **If not provided, the function will scan all source
+   * code files for applicable classes implementing the [BaseCommand] interface.**
    */
   fun load(packageName: String = "") {
     val millis = measureTimeMillis {

@@ -21,6 +21,7 @@ abstract class SlashCommand(
   val guildId: Long? = null,
 ) : ArgumentBuilder(guildId != null), BaseCommand {
   override val name = name.lowercase()
+  var applyCooldown = true
   
   init {
     if (
@@ -28,6 +29,13 @@ abstract class SlashCommand(
       channelCooldown.isNegative() ||
       serverCooldown.isNegative()
     ) throw IllegalArgumentException("Cooldown cannot be negative.")
+  }
+  
+  /**
+   * When called, the cooldown for the command will not be applied.
+   */
+  fun revokeCooldown() {
+    applyCooldown = false
   }
   
   abstract suspend fun Arguments.execute(ctx: SlashContext)

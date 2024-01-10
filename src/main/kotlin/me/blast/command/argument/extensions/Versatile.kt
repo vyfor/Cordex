@@ -7,6 +7,7 @@ import me.blast.command.argument.FinalizedArg
 import me.blast.utils.entity.Snowflake
 import me.blast.utils.Utils
 import me.blast.utils.Utils.hasValue
+import me.blast.utils.Utils.toNullable
 import me.blast.utils.extensions.throwUnless
 import net.fellbaum.jemoji.Emoji
 import net.fellbaum.jemoji.EmojiManager
@@ -146,33 +147,27 @@ fun FinalizedArg<*>.double(): Argument<Double?> {
 fun FinalizedArg<*>.user(searchMutualGuilds: Boolean = false): Argument<User?> {
   return (this as Argument<User?>).apply {
     argumentListValidator = {
-      map {
+      map { query ->
         argumentServer.let { server ->
-          if (contains("#")) {
-            server.members.firstOrNull { entity ->
-              entity.idAsString == it ||
-              entity.getDisplayName(server).equals(it, true)
-            }
-          } else {
-            server.members.firstOrNull { entity ->
-              entity.discriminatedName.equals(it, true) ||
-              entity.getDisplayName(server).equals(it, true)
-            }
+          server.members.firstOrNull {
+            if(contains("#"))
+              it.discriminatedName.equals(query, true)
+            else
+              it.idAsString == query ||
+              it.getNickname(server).toNullable().equals(query, true) ||
+              it.name.equals(query, true) ||
+              it.globalName.toNullable().equals(query, true)
           }
         } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
           argumentUser.mutualServers.firstNotNullOf { server ->
-            server.getMemberById(Utils.extractDigits(it)).getOrElse {
-              if (contains("#")) {
-                server.members.firstOrNull { entity ->
-                  entity.idAsString == it ||
-                  entity.getDisplayName(server).equals(it, true)
-                }
-              } else {
-                server.members.firstOrNull { entity ->
-                  entity.discriminatedName.equals(it, true) ||
-                  entity.getDisplayName(server).equals(it, true)
-                }
-              }
+            server.members.firstOrNull {
+              if(contains("#"))
+                it.discriminatedName.equals(query, true)
+              else
+                it.idAsString == query ||
+                it.getNickname(server).toNullable().equals(query, true) ||
+                it.name.equals(query, true) ||
+                it.globalName.toNullable().equals(query, true)
             }
           }
         }

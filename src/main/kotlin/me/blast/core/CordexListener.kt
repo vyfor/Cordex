@@ -2,8 +2,11 @@ package me.blast.core
 
 import kotlinx.coroutines.launch
 import me.blast.command.Arguments
+import me.blast.command.BaseCommand
 import me.blast.command.text.TextContext
 import me.blast.command.slash.SlashContext
+import me.blast.command.text.TextCommand
+import me.blast.command.text.TextSubcommand
 import me.blast.parser.ArgumentsParser
 import me.blast.parser.exception.ArgumentException
 import me.blast.utils.Utils.hasValue
@@ -13,12 +16,15 @@ import me.blast.utils.cooldown.CooldownType
 import me.blast.utils.event.SlashCommandEvent
 import me.blast.utils.event.TextCommandEvent
 import me.blast.utils.extensions.respondEphemerally
+import org.javacord.api.entity.permission.PermissionType
+import org.javacord.api.entity.server.Server
 import org.javacord.api.event.interaction.SlashCommandCreateEvent
 import org.javacord.api.event.message.MessageCreateEvent
 import org.javacord.api.listener.interaction.SlashCommandCreateListener
 import org.javacord.api.listener.message.MessageCreateListener
 import kotlin.jvm.optionals.getOrNull
 
+// TODO: Reduce boilerplate
 class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener, SlashCommandCreateListener {
   override fun onMessageCreate(event: MessageCreateEvent) {
     if (!event.messageAuthor.isRegularUser) return
@@ -37,46 +43,24 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener,
     cordex.handler.getTextCommands()[args[0].lowercase()]?.apply {
       if (guildOnly && !event.server.hasValue()) return
       
-      try {
-        // Run command interceptor, if provided
-        if (cordex.config.interceptors[name]?.invoke(TextCommandEvent(event, this)) == false) return
-        if (isNsfw && (!guildOnly || !event.serverTextChannel.get().isNsfw)) {
-          event.message.reply("This command can only be run in NSFW channels.")
-          return
-        }
-        // Check for the user's permissions in the server
-        if (guildOnly) {
-          if (
-            permissions != null &&
-            !(
-              event.server.get().isAdmin(event.messageAuthor.asUser().get()) ||
-              event.server.get().getAllowedPermissions(event.messageAuthor.asUser().get()).containsAll(permissions)
-             )
-          ) {
-            event.message.reply(Embeds.missingPermissions(permissions))
+      
+      // Run command interceptor, if provided
+      if (cordex.config.interceptors[name]?.invoke(TextCommandEvent(event, this)) == false) return
+      if (isNsfw && (!guildOnly || !event.serverTextChannel.get().isNsfw)) {
+        event.message.reply("This command can only be run in NSFW channels.")
+        return
+      }
+      if (applyCooldown) {
+        // Server cooldown check
+        if (
+          guildOnly &&
+          serverCooldown.isPositive() &&
+          cordex.cooldownManager.isServerOnCooldown(name, event.server.get().id, serverCooldown.inWholeMilliseconds)
+        ) {
+          cordex.cooldownManager.getServerCooldown(name, event.server.get().id)?.let {
+            cordex.config.cooldownHandler?.invoke(TextCommandEvent(event, this), it, CooldownType.SERVER)
+            ?: event.message.reply(Embeds.userHitCooldown(it.endTime - System.currentTimeMillis(), CooldownType.SERVER))
             return
-          }
-          // Check for the bot's permissions in the server
-          if (
-            selfPermissions != null &&
-            !(
-              event.server.get().isAdmin(event.api.yourself) ||
-              event.server.get().getAllowedPermissions(event.api.yourself).containsAll(selfPermissions)
-             )
-          ) {
-            event.message.reply(Embeds.missingSelfPermissions(selfPermissions))
-            return
-          }
-          // Server cooldown check
-          if (
-            serverCooldown.isPositive() &&
-            cordex.cooldownManager.isServerOnCooldown(name, event.server.get().id, serverCooldown.inWholeMilliseconds)
-          ) {
-            cordex.cooldownManager.getServerCooldown(name, event.server.get().id)?.let {
-              cordex.config.cooldownHandler?.invoke(TextCommandEvent(event, this), it, CooldownType.SERVER)
-              ?: event.message.reply(Embeds.userHitCooldown(it.endTime - System.currentTimeMillis(), CooldownType.SERVER))
-              return
-            }
           }
         }
         // User cooldown check
@@ -101,10 +85,42 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener,
             return
           }
         }
-        // Argument parsing and validation
-        val parsedArgs = ArgumentsParser.parseTextCommand(args.drop(1), options, event, guildOnly)
-        // Command execution
-        Cordex.scope.launch {
+      }
+      
+      // Subcommand validation
+      if (args.size > 1) {
+        subcommands[args[1].lowercase()]?.run {
+          executeTextSubcommand(this, this@apply, args, event, prefix)
+          return
+        }
+      }
+      
+      // Check for user's permissions in the server
+      if (
+        permissions != null &&
+        !(event.server.get().getAllowedPermissions(event.messageAuthor.asUser().get()).let {
+          it.contains(PermissionType.ADMINISTRATOR) || it.containsAll(permissions)
+        })
+      ) {
+        event.message.reply(Embeds.missingPermissions(permissions))
+        return
+      }
+      // Check for the bot's permissions in the server
+      if (
+        selfPermissions != null &&
+        !(event.server.get().getAllowedPermissions(event.api.yourself).let {
+          it.contains(PermissionType.ADMINISTRATOR) || it.containsAll(selfPermissions)
+        })
+      ) {
+        event.message.reply(Embeds.missingSelfPermissions(selfPermissions))
+        return
+      }
+      
+      Cordex.scope.launch {
+        try {
+          // Argument parsing and validation
+          val parsedArgs = ArgumentsParser.parseTextCommand(args.drop(1), options, event, guildOnly)
+          // Command execution
           Arguments(parsedArgs).execute(
             TextContext(
               event,
@@ -115,13 +131,13 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener,
               prefix
             )
           )
+        } catch (e: ArgumentException) {
+          cordex.config.parsingErrorHandler?.invoke(TextCommandEvent(event, this@apply), e)
+          ?: event.message.reply(Embeds.invalidArguments(e))
+        } catch (e: Exception) {
+          cordex.config.errorHandler?.invoke(TextCommandEvent(event, this@apply), e)
+          Cordex.logger.error("Error occurred while executing command $name", e)
         }
-      } catch (e: ArgumentException) {
-        cordex.config.parsingErrorHandler?.invoke(TextCommandEvent(event, this), e)
-        ?: event.message.reply(Embeds.invalidArguments(e))
-      } catch (e: Exception) {
-        cordex.config.errorHandler?.invoke(TextCommandEvent(event, this), e)
-        Cordex.logger.error("Error occurred while executing command $name", e)
       }
     } ?: run {
       // Let us agree, you wouldn't give a command a thirty character name, or would you?
@@ -137,6 +153,85 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener,
         }
       }
     }
+  }
+  
+  private fun executeTextSubcommand(command: TextSubcommand, parentCommand: TextCommand, args: List<String>, event: MessageCreateEvent, prefix: String): Boolean {
+    if (command.guildOnly && !event.server.hasValue()) return false
+    
+    command.apply {
+      if (isNsfw && (!guildOnly || !event.serverTextChannel.get().isNsfw)) {
+        event.message.reply("This subcommand can only be run in NSFW channels.")
+        return false
+      }
+      
+      if (guildOnly) {
+        // Check for user's permissions in the server
+        if (permissions == null) {
+          if (
+            parentCommand.permissions != null &&
+            !(event.server.get().getAllowedPermissions(event.messageAuthor.asUser().get()).let {
+              it.contains(PermissionType.ADMINISTRATOR) || it.containsAll(parentCommand.permissions)
+            })
+          ) {
+            event.message.reply(Embeds.missingPermissions(parentCommand.permissions))
+            return false
+          }
+        } else if (
+          !(event.server.get().getAllowedPermissions(event.messageAuthor.asUser().get()).let {
+            it.contains(PermissionType.ADMINISTRATOR) || it.containsAll(permissions)
+          })
+        ) {
+          event.message.reply(Embeds.missingPermissions(permissions))
+          return false
+        }
+        // Check for the bot's permissions in the server
+        if (selfPermissions == null) {
+          if (
+            parentCommand.selfPermissions != null &&
+            !(event.server.get().getAllowedPermissions(event.messageAuthor.asUser().get()).let {
+              it.contains(PermissionType.ADMINISTRATOR) || it.containsAll(parentCommand.selfPermissions)
+            })
+          ) {
+            event.message.reply(Embeds.missingPermissions(parentCommand.selfPermissions))
+            return false
+          }
+        } else if (
+          !(event.server.get().getAllowedPermissions(event.messageAuthor.asUser().get()).let {
+            it.contains(PermissionType.ADMINISTRATOR) || it.containsAll(selfPermissions)
+          })
+        ) {
+          event.message.reply(Embeds.missingPermissions(selfPermissions))
+          return false
+        }
+      }
+      
+      Cordex.scope.launch {
+        try {
+          // Argument parsing and validation
+          val parsedArgs = ArgumentsParser.parseTextCommand(args.drop(2), options, event, guildOnly)
+          // Command execution
+          Cordex.logger.info(options.joinToString("\n") { it.argumentName!! })
+          Arguments(parsedArgs).execute(
+            parentCommand.name,
+            TextContext(
+              event,
+              event.server.getOrNull(),
+              event.channel,
+              event.messageAuthor.asUser().get(),
+              event.message,
+              prefix
+            )
+          )
+        } catch (e: ArgumentException) {
+          cordex.config.parsingErrorHandler?.invoke(TextCommandEvent(event, parentCommand), e)
+          ?: event.message.reply(Embeds.invalidArguments(e))
+        } catch (e: Exception) {
+          cordex.config.errorHandler?.invoke(TextCommandEvent(event, parentCommand), e)
+          Cordex.logger.error("Error occurred while executing command ${parentCommand.name} ${command.name}", e)
+        }
+      }
+    }
+    return false
   }
   
   private fun executeSlashCommand(event: SlashCommandCreateEvent) {
@@ -161,8 +256,11 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener,
           event.slashCommandInteraction.respondEphemerally(Embeds.missingSelfPermissions(selfPermissions))
           return
         }
+      }
+      if (applyCooldown) {
         // Server cooldown check
         if (
+          guildOnly &&
           serverCooldown.isPositive() &&
           cordex.cooldownManager.isServerOnCooldown(name, event.slashCommandInteraction.server.get().id, serverCooldown.inWholeMilliseconds)
         ) {
@@ -172,34 +270,35 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener,
             return
           }
         }
-      }
-      // User cooldown check
-      if (
-        userCooldown.isPositive() &&
-        cordex.cooldownManager.isUserOnCooldown(name, event.slashCommandInteraction.user.id, userCooldown.inWholeMilliseconds)
-      ) {
-        cordex.cooldownManager.getUserCooldown(name, event.slashCommandInteraction.user.id)?.let {
-          cordex.config.cooldownHandler?.invoke(SlashCommandEvent(event, this), it, CooldownType.USER)
-          ?: event.slashCommandInteraction.respondEphemerally(Embeds.userHitCooldown(it.endTime - System.currentTimeMillis(), CooldownType.USER))
-          return
-        }
-      }
-      // Channel cooldown check
-      if(channelCooldown.isPositive()) event.slashCommandInteraction.channel.ifPresent { channel ->
+        // User cooldown check
         if (
-          cordex.cooldownManager.isChannelOnCooldown(name, channel.id, channelCooldown.inWholeMilliseconds)
+          userCooldown.isPositive() &&
+          cordex.cooldownManager.isUserOnCooldown(name, event.slashCommandInteraction.user.id, userCooldown.inWholeMilliseconds)
         ) {
-          cordex.cooldownManager.getChannelCooldown(name, channel.id)?.let {
-            cordex.config.cooldownHandler?.invoke(SlashCommandEvent(event, this), it, CooldownType.CHANNEL)
-            ?: event.slashCommandInteraction.respondEphemerally(Embeds.userHitCooldown(it.endTime - System.currentTimeMillis(), CooldownType.CHANNEL))
-            return@ifPresent
+          cordex.cooldownManager.getUserCooldown(name, event.slashCommandInteraction.user.id)?.let {
+            cordex.config.cooldownHandler?.invoke(SlashCommandEvent(event, this), it, CooldownType.USER)
+            ?: event.slashCommandInteraction.respondEphemerally(Embeds.userHitCooldown(it.endTime - System.currentTimeMillis(), CooldownType.USER))
+            return
+          }
+        }
+        // Channel cooldown check
+        if (channelCooldown.isPositive()) event.slashCommandInteraction.channel.ifPresent { channel ->
+          if (
+            cordex.cooldownManager.isChannelOnCooldown(name, channel.id, channelCooldown.inWholeMilliseconds)
+          ) {
+            cordex.cooldownManager.getChannelCooldown(name, channel.id)?.let {
+              cordex.config.cooldownHandler?.invoke(SlashCommandEvent(event, this), it, CooldownType.CHANNEL)
+              ?: event.slashCommandInteraction.respondEphemerally(Embeds.userHitCooldown(it.endTime - System.currentTimeMillis(), CooldownType.CHANNEL))
+              return@ifPresent
+            }
           }
         }
       }
-      // Argument parsing and validation
-      val parsedArgs = ArgumentsParser.parseSlashCommand(options, event)
-      // Command execution
+      
       Cordex.scope.launch {
+        // Argument parsing and validation
+        val parsedArgs = ArgumentsParser.parseSlashCommand(options, event)
+        // Command execution
         Arguments(parsedArgs).execute(
           SlashContext(
             event,

@@ -4,8 +4,10 @@ package me.blast.command.argument.extensions
 
 import me.blast.command.argument.Argument
 import me.blast.command.argument.NonNull
+import me.blast.core.Cordex
 import me.blast.utils.Utils
 import me.blast.utils.Utils.hasValue
+import me.blast.utils.Utils.toNullable
 import me.blast.utils.entity.Snowflake
 import me.blast.utils.extensions.throwUnless
 import net.fellbaum.jemoji.Emoji
@@ -127,31 +129,25 @@ fun NonNull<*>.user(searchMutualGuilds: Boolean = false): Argument<User> {
   return (this as Argument<User>).apply {
     argumentValidator = {
       argumentServer.let { server ->
-        if (contains("#")) {
-          server.members.firstOrNull {
+        server.members.firstOrNull {
+          if(contains("#"))
+            it.discriminatedName.equals(this, true)
+          else
             it.idAsString == this ||
-            it.getDisplayName(server).equals(this, true)
-          }
-        } else {
-          server.members.firstOrNull {
-            it.discriminatedName.equals(this, true) ||
-            it.getDisplayName(server).equals(this, true)
-          }
+            it.getNickname(server).toNullable().equals(this, true) ||
+            it.name.equals(this, true) ||
+            it.globalName.toNullable().equals(this, true)
         }
       } ?: throwUnless(!guildOnly && searchMutualGuilds && argumentChannel.asPrivateChannel().hasValue()) {
         argumentUser.mutualServers.firstNotNullOf { server ->
-          server.getMemberById(Utils.extractDigits(this)).getOrElse {
-            if (contains("#")) {
-              server.members.firstOrNull {
-                it.idAsString == this ||
-                it.getDisplayName(server).equals(this, true)
-              }
-            } else {
-              server.members.firstOrNull {
-                it.discriminatedName.equals(this, true) ||
-                it.getDisplayName(server).equals(this, true)
-              }
-            }
+          server.members.firstOrNull {
+            if(contains("#"))
+              it.discriminatedName.equals(this, true)
+            else
+              it.idAsString == this ||
+              it.getNickname(server).toNullable().equals(this, true) ||
+              it.name.equals(this, true) ||
+              it.globalName.toNullable().equals(this, true)
           }
         }
       }

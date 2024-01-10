@@ -14,7 +14,9 @@ repositories {
 }
 
 dependencies {
-    api("org.javacord:javacord:3.9.0-SNAPSHOT")
+//    api("org.javacord:javacord:3.9.0-SNAPSHOT")
+//    Until Javacord merges the pr
+    api("com.github.RealYusufIsmail:Javacord:userSystem-SNAPSHOT")
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     api("net.fellbaum:jemoji:1.1.6")
     

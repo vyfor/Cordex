@@ -2,6 +2,7 @@ package me.blast.command
 
 import me.blast.command.slash.SlashCommand
 import me.blast.command.text.TextCommand
+import kotlin.time.Duration
 
 interface BaseCommand {
   val name: String
