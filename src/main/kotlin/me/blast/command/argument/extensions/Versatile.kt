@@ -24,7 +24,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.Duration
 import java.util.*
-import kotlin.jvm.optionals.getOrElse
 import kotlin.jvm.optionals.getOrNull
 import kotlin.reflect.KClass
 
@@ -517,8 +516,8 @@ fun FinalizedArg<*>.mentionable(searchMutualGuilds: Boolean = false): Argument<M
         }
       }
     }
+    argumentReturnValue = Mentionable::class
   }
-  argumentReturnValue = Mentionable::class
 }
 
 /**
@@ -729,4 +728,17 @@ fun <T> FinalizedArg<*>.map(vararg values: Pair<String, T>, ignoreCase: Boolean 
     }
     argumentReturnValue = Map::class
   }
+}
+
+/**
+ * Joins the argument values into one string.
+ *
+ * @return An Argument containing the combined value.
+ */
+fun FinalizedArg<*>.combine(separator: String = " "): Argument<String?> {
+  return (this as Argument<List<*>>).apply {
+    argumentListValidator = {
+      joinToString(separator)
+    }
+  } as Argument<String?>
 }
