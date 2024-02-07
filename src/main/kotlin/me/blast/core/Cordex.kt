@@ -134,7 +134,7 @@ inline fun cordex(
 ): Flow<DiscordApi> = flow {
   CordexBuilder(token).run {
     block()
-    api.setAllIntents().setWaitForUsersOnStartup(true).loginAllShards().map {
+    api.loginAllShards().map {
       emit(it.await().apply {
         addListener(CordexListener(this@run))
         CommandUtils.generateSlashCommands(handler.getSlashCommands().values).let { (globalCommands, serverCommands) ->
