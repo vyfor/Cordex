@@ -226,8 +226,8 @@ inline fun <reified R : ServerChannel> NonNull<*>.channel(vararg types: KClass<o
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved [ServerTextChannel] value.
  */
-fun NonNull<*>.textChannel(searchMutualGuilds: Boolean = false): Argument<ServerTextChannel?> {
-  return (this as Argument<ServerTextChannel?>).apply {
+fun NonNull<*>.textChannel(searchMutualGuilds: Boolean = false): Argument<ServerTextChannel> {
+  return (this as Argument<ServerTextChannel>).apply {
     argumentValidator = {
       argumentServer.textChannels.firstOrNull {
         it.idAsString == this ||
@@ -253,8 +253,8 @@ fun NonNull<*>.textChannel(searchMutualGuilds: Boolean = false): Argument<Server
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved [ServerVoiceChannel] value.
  */
-fun NonNull<*>.voiceChannel(searchMutualGuilds: Boolean = false): Argument<ServerVoiceChannel?> {
-  return (this as Argument<ServerVoiceChannel?>).apply {
+fun NonNull<*>.voiceChannel(searchMutualGuilds: Boolean = false): Argument<ServerVoiceChannel> {
+  return (this as Argument<ServerVoiceChannel>).apply {
     argumentValidator = {
       argumentServer.voiceChannels.firstOrNull {
         it.idAsString == this ||
@@ -280,8 +280,8 @@ fun NonNull<*>.voiceChannel(searchMutualGuilds: Boolean = false): Argument<Serve
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved [ServerThreadChannel] value.
  */
-fun NonNull<*>.threadChannel(searchMutualGuilds: Boolean = false): Argument<ServerThreadChannel?> {
-  return (this as Argument<ServerThreadChannel?>).apply {
+fun NonNull<*>.threadChannel(searchMutualGuilds: Boolean = false): Argument<ServerThreadChannel> {
+  return (this as Argument<ServerThreadChannel>).apply {
     argumentValidator = {
       argumentServer.threadChannels.firstOrNull {
         it.idAsString == this ||
@@ -307,8 +307,8 @@ fun NonNull<*>.threadChannel(searchMutualGuilds: Boolean = false): Argument<Serv
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved [ServerStageVoiceChannel] value.
  */
-fun NonNull<*>.stageChannel(searchMutualGuilds: Boolean = false): Argument<ServerStageVoiceChannel?> {
-  return (this as Argument<ServerStageVoiceChannel?>).apply {
+fun NonNull<*>.stageChannel(searchMutualGuilds: Boolean = false): Argument<ServerStageVoiceChannel> {
+  return (this as Argument<ServerStageVoiceChannel>).apply {
     argumentValidator = {
       argumentServer.channels.filter { it.asServerStageVoiceChannel().isPresent }.firstOrNull {
         it.idAsString == this ||
@@ -334,8 +334,8 @@ fun NonNull<*>.stageChannel(searchMutualGuilds: Boolean = false): Argument<Serve
  * @param searchMutualGuilds Whether to search mutual guilds of the user if not found in the current guild (only in DMs). Defaults to false.
  * @return An Argument containing the retrieved [ServerForumChannel] value.
  */
-fun NonNull<*>.forumChannel(searchMutualGuilds: Boolean = false): Argument<ServerForumChannel?> {
-  return (this as Argument<ServerForumChannel?>).apply {
+fun NonNull<*>.forumChannel(searchMutualGuilds: Boolean = false): Argument<ServerForumChannel> {
+  return (this as Argument<ServerForumChannel>).apply {
     argumentValidator = {
       argumentServer.forumChannels.firstOrNull {
         it.idAsString == this ||
