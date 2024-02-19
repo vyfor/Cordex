@@ -50,40 +50,37 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener,
         event.message.reply("This command can only be run in NSFW channels.")
         return
       }
-      if (applyCooldown) {
-        // Server cooldown check
-        if (
-          guildOnly &&
-          serverCooldown.isPositive() &&
-          cordex.cooldownManager.isServerOnCooldown(name, event.server.get().id, serverCooldown.inWholeMilliseconds)
-        ) {
-          cordex.cooldownManager.getServerCooldown(name, event.server.get().id)?.let {
-            cordex.config.cooldownHandler?.invoke(TextCommandEvent(event, this), it, CooldownType.SERVER)
-            ?: event.message.reply(Embeds.userHitCooldown(it.endTime - System.currentTimeMillis(), CooldownType.SERVER))
-            return
-          }
+      if (
+        guildOnly &&
+        serverCooldown.isPositive() &&
+        cordex.cooldownManager.isServerOnCooldown(name, event.server.get().id, serverCooldown.inWholeMilliseconds)
+      ) {
+        cordex.cooldownManager.getServerCooldown(name, event.server.get().id)?.let {
+          cordex.config.cooldownHandler?.invoke(TextCommandEvent(event, this), it, CooldownType.SERVER)
+          ?: event.message.reply(Embeds.userHitCooldown(it.endTime - System.currentTimeMillis(), CooldownType.SERVER))
+          return
         }
-        // User cooldown check
-        if (
-          userCooldown.isPositive() &&
-          cordex.cooldownManager.isUserOnCooldown(name, event.messageAuthor.id, userCooldown.inWholeMilliseconds)
-        ) {
-          cordex.cooldownManager.getUserCooldown(name, event.messageAuthor.id)?.let {
-            cordex.config.cooldownHandler?.invoke(TextCommandEvent(event, this), it, CooldownType.USER)
-            ?: event.message.reply(Embeds.userHitCooldown(it.endTime - System.currentTimeMillis(), CooldownType.USER))
-            return
-          }
+      }
+      // User cooldown check
+      if (
+        userCooldown.isPositive() &&
+        cordex.cooldownManager.isUserOnCooldown(name, event.messageAuthor.id, userCooldown.inWholeMilliseconds)
+      ) {
+        cordex.cooldownManager.getUserCooldown(name, event.messageAuthor.id)?.let {
+          cordex.config.cooldownHandler?.invoke(TextCommandEvent(event, this), it, CooldownType.USER)
+          ?: event.message.reply(Embeds.userHitCooldown(it.endTime - System.currentTimeMillis(), CooldownType.USER))
+          return
         }
-        // Channel cooldown check
-        if (
-          channelCooldown.isPositive() &&
-          cordex.cooldownManager.isChannelOnCooldown(name, event.channel.id, channelCooldown.inWholeMilliseconds)
-        ) {
-          cordex.cooldownManager.getChannelCooldown(name, event.channel.id)?.let {
-            cordex.config.cooldownHandler?.invoke(TextCommandEvent(event, this), it, CooldownType.CHANNEL)
-            ?: event.message.reply(Embeds.userHitCooldown(it.endTime - System.currentTimeMillis(), CooldownType.CHANNEL))
-            return
-          }
+      }
+      // Channel cooldown check
+      if (
+        channelCooldown.isPositive() &&
+        cordex.cooldownManager.isChannelOnCooldown(name, event.channel.id, channelCooldown.inWholeMilliseconds)
+      ) {
+        cordex.cooldownManager.getChannelCooldown(name, event.channel.id)?.let {
+          cordex.config.cooldownHandler?.invoke(TextCommandEvent(event, this), it, CooldownType.CHANNEL)
+          ?: event.message.reply(Embeds.userHitCooldown(it.endTime - System.currentTimeMillis(), CooldownType.CHANNEL))
+          return
         }
       }
       
@@ -210,7 +207,6 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener,
           // Argument parsing and validation
           val parsedArgs = ArgumentsParser.parseTextCommand(args.drop(2), options, event, guildOnly)
           // Command execution
-          Cordex.logger.info(options.joinToString("\n") { it.argumentName!! })
           Arguments(parsedArgs).execute(
             parentCommand.name,
             TextContext(

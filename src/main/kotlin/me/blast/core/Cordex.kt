@@ -25,8 +25,8 @@ object Cordex {
 }
 
 class CordexBuilder(token: String) {
-  internal val config = CordexConfiguration()
-  internal val cooldownManager = CooldownManager()
+  val config = CordexConfiguration()
+  val cooldownManager = CooldownManager()
   val api = DiscordApiBuilder().setToken(token)!!
   val handler = CordexCommands()
   

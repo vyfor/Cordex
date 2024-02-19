@@ -5,14 +5,12 @@ package me.blast.core
 import me.blast.command.BaseCommand
 import me.blast.command.text.TextCommand
 import me.blast.command.slash.SlashCommand
-import me.blast.command.text.TextSubcommand
 import me.blast.utils.Utils
 import kotlin.system.measureTimeMillis
 
 class CordexCommands {
   private val textCommands = mutableMapOf<String, TextCommand>()
   private val slashCommands = mutableMapOf<String, SlashCommand>()
-  private val textSubCommands = mutableMapOf<String, TextSubcommand>()
   
   /**
    * Get a map containing the registered text commands.
@@ -34,8 +32,12 @@ class CordexCommands {
    * @param command The command to register.
    */
   fun register(command: TextCommand) {
+    if (textCommands.containsKey(command.name)) throw RuntimeException("Text command with name '${command.name}' already exists!")
     textCommands[command.name] = command
-    command.aliases?.forEach { textCommands[it] = command }
+    command.aliases?.forEach {
+      if (textCommands.containsKey(it)) throw RuntimeException("Text command alias with name '${it}' already exists!")
+      textCommands[it] = command
+    }
   }
   
   /**
@@ -54,6 +56,7 @@ class CordexCommands {
    * @param command The command to register.
    */
   fun register(command: SlashCommand) {
+    if (slashCommands.containsKey(command.name)) throw RuntimeException("Slash command with name '${command.name}' already exists!")
     slashCommands[command.name] = command
   }
   
@@ -75,10 +78,12 @@ class CordexCommands {
    * code files for applicable classes implementing the [BaseCommand] interface.**
    */
   fun load(packageName: String = "") {
-    val millis = measureTimeMillis {
-      Utils.loadClasses(packageName).filter {
+    val classes: List<Class<*>>
+    val millis= measureTimeMillis {
+      classes = Utils.loadClasses(packageName).filter {
         BaseCommand::class.java.isAssignableFrom(it)
-      }.forEach { command ->
+      }
+      classes.forEach { command ->
         try {
           val constructor = command.getDeclaredConstructor()
           constructor.isAccessible = true
@@ -100,7 +105,7 @@ class CordexCommands {
         }
       }
     }
-    Cordex.logger.info("Took ${millis}ms to load commands from ${packageName}.")
+    Cordex.logger.info("Took ${millis}ms to load ${classes.size} commands from $packageName")
   }
   
   /**

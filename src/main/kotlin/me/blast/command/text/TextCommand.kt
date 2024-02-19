@@ -3,7 +3,6 @@ package me.blast.command.text
 import me.blast.command.Arguments
 import me.blast.command.BaseCommand
 import me.blast.command.argument.builder.ArgumentBuilder
-import me.blast.command.dsl.SubcommandBuilder
 import org.javacord.api.entity.permission.PermissionType
 import kotlin.time.Duration
 
@@ -23,7 +22,6 @@ abstract class TextCommand(
   open val subcommands by lazy { mutableMapOf<String, TextSubcommand>() }
   override val name = name.lowercase()
   val aliases = aliases?.map { it.lowercase() }
-  var applyCooldown = true
   
   init {
     if (
@@ -35,15 +33,17 @@ abstract class TextCommand(
   
   abstract suspend fun Arguments.execute(ctx: TextContext)
   
-  /**
-   * When called, the cooldown for the command will not be applied.
-   */
-  fun revokeCooldown() {
-    applyCooldown = false
-  }
+//  /**
+//   * When called, the cooldown for the command will not be applied.
+//   */
+//  fun revokeCooldown() {} // todo
   
   operator fun TextSubcommand.unaryPlus() {
+    if (subcommands.containsKey(name)) throw RuntimeException("Subcommand with name '${name}' already exists for command '${this@TextCommand.name}'!")
     subcommands[name] = this
-    aliases?.forEach { subcommands[it] = this }
+    aliases?.forEach {
+      if (subcommands.containsKey(it)) throw RuntimeException("Subcommand alias with name '${it}' already exists for command '${this@TextCommand.name}'!")
+      subcommands[it] = this
+    }
   }
 }

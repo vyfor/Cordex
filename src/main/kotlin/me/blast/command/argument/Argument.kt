@@ -65,7 +65,10 @@ sealed class Argument<T>(copyFrom: Argument<*>? = null, val options: ArrayList<A
     }
     require(argumentRange.first >= 0 || argumentRange.last >= 0) { "Argument's range must be positive!" }
     if (argumentRange.first == 0) argumentIsOptional = true
-    require(options.none { it.argumentName == argumentName || it.argumentShortName == argumentShortName }) { "Argument with name --${argumentName} or -${argumentShortName} already exists!" }
+    require(options.none { it.argumentName == argumentName || (it.argumentShortName != null && it.argumentShortName == argumentShortName) }) { "Argument with name --${argumentName} ${
+      if (argumentType == ArgumentType.POSITIONAL) ""
+      else "or -$argumentShortName "
+    }already exists!" }
     options.add(this)
     return this
   }
