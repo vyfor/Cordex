@@ -84,14 +84,6 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener,
         }
       }
       
-      // Subcommand validation
-      if (args.size > 1) {
-        subcommands[args[1].lowercase()]?.run {
-          executeTextSubcommand(this, this@apply, args, event, prefix)
-          return
-        }
-      }
-      
       // Check for user's permissions in the server
       if (
         permissions != null &&
@@ -111,6 +103,14 @@ class CordexListener(private val cordex: CordexBuilder) : MessageCreateListener,
       ) {
         event.message.reply(Embeds.missingSelfPermissions(selfPermissions))
         return
+      }
+      
+      // Subcommand validation
+      if (args.size > 1) {
+        subcommands[args[1].lowercase()]?.run {
+          executeTextSubcommand(this, this@apply, args, event, prefix)
+          return
+        }
       }
       
       Cordex.scope.launch {
