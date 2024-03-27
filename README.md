@@ -1,4 +1,4 @@
-# 🧩 Cordex [![Kotlin](https://img.shields.io/badge/Kotlin-1.9.0-blue.svg?style=flat&logo=kotlin)](https://kotlinlang.org) [![](https://jitpack.io/v/ReBlast/Cordex.svg)](https://jitpack.io/#ReBlast/Cordex)
+# 🧩 Cordex [![Kotlin](https://img.shields.io/badge/Kotlin-1.9.0-blue.svg?style=flat&logo=kotlin)](https://kotlinlang.org) [![](https://jitpack.io/v/vyfor/Cordex.svg)](https://jitpack.io/#vyfor/Cordex)
 
 **🚀 A fast, powerful and easy-to-use [Javacord](https://javacord.org/) framework written in [Kotlin](https://kotlinlang.org/).**
 
@@ -28,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.reblast:Cordex:0.3.2")
+    implementation("com.github.vyfor:Cordex:0.3.2")
 }
 ```
 
@@ -42,7 +42,7 @@ dependencies {
 </repositories>
 
 <dependency>
-    <groupId>com.github.reblast</groupId>
+    <groupId>com.github.vyfor</groupId>
     <artifactId>Cordex</artifactId>
     <version>0.3.2</version>
 </dependency>
