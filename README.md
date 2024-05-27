@@ -6,7 +6,7 @@
 It presents a developer-friendly solution for defining command arguments in a manner reminiscent of command-line interfaces (CLI).
 
 > [!WARNING]
-> Keep in mind that this library is in beta, and may not be well-suited for production purposes just yet.
+> Keep in mind that this library is in beta, and may not be ready for production purposes just yet.
 
 ## 🔌 Requirements
 
